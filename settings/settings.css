@@ -1,0 +1,633 @@
+/* =============================================================
+   SETTINGS UI STYLES
+   ============================================================= */
+
+.settings-section {
+    margin-bottom: 24px;
+    background-color: var(--secondary-bg);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid var(--border-color);
+}
+
+.settings-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 0;
+    margin-bottom: 16px;
+}
+
+.settings-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.settings-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.settings-row:first-of-type {
+    padding-top: 0;
+}
+
+.settings-info {
+    flex-grow: 1;
+    padding-right: 16px;
+}
+
+.settings-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.settings-desc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+/* Custom Selects */
+.settings-select {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 13px;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 140px;
+}
+
+.settings-select:hover {
+    border-color: var(--accent-color);
+}
+
+.settings-select:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+/* Number Input */
+.settings-number-input {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+    border-radius: 8px;
+    width: 70px;
+    text-align: center;
+    font-family: inherit;
+}
+
+.settings-number-input:focus {
+    border-color: var(--accent-color);
+    outline: none;
+}
+
+/* Checkbox Group */
+.settings-checkbox-group {
+    display: flex;
+    gap: 12px;
+}
+
+.settings-checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+/* iOS Style Toggle Switch */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-switch .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #4b5563;
+    transition: .3s;
+}
+
+.toggle-switch .slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .3s;
+}
+
+.toggle-switch input:checked + .slider {
+    background-color: var(--accent-color);
+}
+
+.toggle-switch input:focus + .slider {
+    box-shadow: 0 0 1px var(--accent-color);
+}
+
+.toggle-switch input:checked + .slider:before {
+    transform: translateX(20px);
+}
+
+/* Rounded sliders */
+.toggle-switch .slider.round {
+    border-radius: 24px;
+}
+
+.toggle-switch .slider.round:before {
+    border-radius: 50%;
+}
+
+/* Extracted from Inline Styles */
+#settings-main-container {
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.settings-main-title {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-weight: 600;
+    font-size: 24px;
+}
+
+.promo-link {
+    color: #60a5fa;
+    text-decoration: none;
+    margin-top: 6px;
+    display: inline-block;
+}
+
+.gen-options-row {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 8px;
+}
+
+.gen-options-info {
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.gen-options-group {
+    padding-left: 0;
+}
+
+/* =============================================================
+   SYNC & ACCOUNT STYLES
+   ============================================================= */
+
+/* Signed out promo card */
+.sync-promo-card {
+    text-align: center;
+    padding: 32px 16px;
+    background: var(--secondary-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.sync-promo-icon {
+    width: 48px;
+    height: 48px;
+    color: var(--accent-color);
+    margin-bottom: 16px;
+}
+
+.sync-promo-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 8px;
+}
+
+.sync-promo-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0 0 24px;
+    max-width: 320px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Google Sign-In Button */
+.google-sign-in-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    color: #3c4043;
+    border: 1px solid #dadce0;
+    border-radius: 24px;
+    padding: 10px 24px;
+    font-family: 'Inter', 'Roboto', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.google-sign-in-btn:hover {
+    background: #f8f9fa;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.google-sign-in-btn:active {
+    background: #e8eaed;
+}
+
+.google-sign-in-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.google-logo {
+    flex-shrink: 0;
+}
+
+/* Profile Card */
+.sync-profile-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    background: var(--secondary-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 16px;
+}
+
+.sync-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.sync-profile-info {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.sync-profile-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.sync-profile-email {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Premium Badge */
+.sync-premium-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #fff;
+    white-space: nowrap;
+}
+
+/* Sync Now Button */
+.sync-now-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent-color);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.sync-now-btn:hover {
+    filter: brightness(1.1);
+}
+
+.sync-now-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.sync-now-icon {
+    width: 16px;
+    height: 16px;
+}
+
+/* Sync Spinner */
+.sync-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: sync-spin 0.6s linear infinite;
+}
+
+@keyframes sync-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Premium Section */
+.sync-premium-section {
+    padding: 4px 0;
+}
+
+.sync-premium-state {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+}
+
+/* Upgrade Button */
+.sync-upgrade-btn {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    position: relative;
+    overflow: hidden;
+}
+
+.sync-upgrade-btn::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.15) 50%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%) rotate(25deg); }
+    100% { transform: translateX(100%) rotate(25deg); }
+}
+
+.sync-upgrade-btn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+/* Admin Button */
+.sync-admin-btn {
+    background: var(--card-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sync-admin-btn:hover {
+    background: var(--accent-color);
+    color: #fff;
+    border-color: var(--accent-color);
+}
+
+/* Sign Out */
+.sync-signout-section {
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+}
+
+.sync-sign-out-btn {
+    background: none;
+    border: none;
+    color: #ef4444;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.sync-sign-out-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+/* State views */
+.sync-state-view.hidden {
+    display: none;
+}
+
+/* Auth Open Button (Sign In / Create Account) */
+.auth-open-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    border: none;
+    border-radius: 24px;
+    padding: 12px 28px;
+    font-family: 'Inter', 'Roboto', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.auth-open-btn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+}
+
+.auth-open-btn:active {
+    transform: translateY(0);
+}
+
+.auth-open-icon {
+    flex-shrink: 0;
+}
+
+/* Merge Prompt Modal */
+.merge-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 1;
+    transition: opacity 0.2s ease;
+}
+
+.merge-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.merge-modal {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 16px;
+    padding: 32px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+    transform: translateY(0);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.merge-overlay.hidden .merge-modal {
+    transform: translateY(20px);
+}
+
+.merge-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    background: rgba(99, 102, 241, 0.1);
+    color: #818cf8;
+    border-radius: 50%;
+    margin-bottom: 20px;
+}
+
+.merge-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #f8fafc;
+    margin-bottom: 12px;
+}
+
+.merge-desc {
+    font-size: 14px;
+    color: #94a3b8;
+    margin-bottom: 16px;
+    line-height: 1.5;
+}
+
+.merge-question {
+    font-size: 15px;
+    color: #e2e8f0;
+    font-weight: 500;
+    margin-bottom: 24px;
+}
+
+.merge-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.merge-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.merge-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.merge-btn-primary {
+    background: #6366f1;
+    color: #ffffff;
+}
+
+.merge-btn-primary:hover:not(:disabled) {
+    background: #4f46e5;
+}
+
+.merge-btn-secondary {
+    background: #334155;
+    color: #f8fafc;
+}
+
+.merge-btn-secondary:hover:not(:disabled) {
+    background: #475569;
+}

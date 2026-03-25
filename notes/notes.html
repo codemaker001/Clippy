@@ -1,0 +1,368 @@
+<!-- Notes/Ideas Module — HTML Fragment (loaded by router) -->
+
+<!-- Sidebar for folders -->
+<aside id="sidebar">
+    <div class="sidebar-header">
+        <h3>Folders</h3>
+        <button id="add-folder-btn" class="icon-btn" title="Add new folder">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14" />
+                <path d="M12 5v14" />
+            </svg>
+        </button>
+    </div>
+    <ul id="folder-list">
+        <!-- Folders will be dynamically inserted here -->
+    </ul>
+    <div class="sidebar-footer">
+        <button id="copy-tabs-btn" class="io-btn">Copy all Tabs</button>
+        <div class="io-btn-group">
+            <div class="io-dropdown-wrapper">
+                <button id="import-btn" class="io-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                    Import
+                </button>
+                <div class="io-dropdown" id="import-dropdown">
+                    <button class="io-dropdown-item" data-action="import-json">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                        </svg>
+                        JSON
+                    </button>
+                    <button class="io-dropdown-item" data-action="import-zip">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <path d="M21 10l-9 11L3 10M3 10l9-1 9 1M7 10V4h4v4h2V4h4v6" />
+                        </svg>
+                        ZIP
+                    </button>
+                </div>
+            </div>
+            <div class="io-dropdown-wrapper">
+                <button id="export-btn" class="io-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    Export
+                </button>
+                <div class="io-dropdown" id="export-dropdown">
+                    <button class="io-dropdown-item" data-action="export-json">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                        </svg>
+                        JSON
+                    </button>
+                    <button class="io-dropdown-item" data-action="export-zip">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <path d="M21 10l-9 11L3 10M3 10l9-1 9 1M7 10V4h4v4h2V4h4v6" />
+                        </svg>
+                        ZIP
+                    </button>
+                </div>
+            </div>
+        </div>
+        <input type="file" id="import-file-input" accept=".json,.zip" class="notes-hidden-input">
+    </div>
+</aside>
+
+<!-- Main content area -->
+<main id="main-content">
+    <header id="top-bar">
+        <div id="search-container" class="search-container">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="search-box" class="search-input" placeholder="Search items...">
+            <button id="search-clear" class="search-clear-btn" title="Clear search">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+            </button>
+            <div class="filter-wrapper">
+                <button id="filter-btn" class="search-filter-btn" title="Advanced Filters">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="4" y1="21" x2="4" y2="14" />
+                        <line x1="4" y1="10" x2="4" y2="3" />
+                        <line x1="12" y1="21" x2="12" y2="12" />
+                        <line x1="12" y1="8" x2="12" y2="3" />
+                        <line x1="20" y1="21" x2="20" y2="16" />
+                        <line x1="20" y1="12" x2="20" y2="3" />
+                        <line x1="1" y1="14" x2="7" y2="14" />
+                        <line x1="9" y1="8" x2="15" y2="8" />
+                        <line x1="17" y1="16" x2="23" y2="16" />
+                    </svg>
+                </button>
+                <div id="filter-dropdown" class="filter-dropdown hidden">
+                    <div class="filter-section">
+                        <h4>Tags</h4>
+                        <div id="filter-tags-list" class="filter-tags-list">
+                            <!-- Tags populated dynamically -->
+                        </div>
+                    </div>
+                    <div class="filter-section">
+                        <h4>Date Range</h4>
+                        <div class="filter-date-range">
+                            <input type="date" id="filter-date-start" class="filter-date-input" title="Start Date">
+                            <span class="range-divider">-</span>
+                            <input type="date" id="filter-date-end" class="filter-date-input" title="End Date">
+                        </div>
+                    </div>
+                    <div class="filter-section">
+                        <h4>Type</h4>
+                        <div class="filter-type-options">
+                            <label><input type="checkbox" data-type="text" checked> Notes</label>
+                            <label><input type="checkbox" data-type="link" checked> Links</label>
+                            <label><input type="checkbox" data-type="image" checked> Images</label>
+                            <label><input type="checkbox" data-type="file" checked> Files</label>
+                        </div>
+                    </div>
+                    <div class="filter-actions">
+                        <button id="clear-filters-btn">Clear All</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div id="folder-header-container" class="folder-header-container">
+        <button id="folder-back-btn" class="icon-btn hidden" title="Go up">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+        </button>
+        <h2 id="current-folder-title" class="mb-0">All Items</h2>
+        <button id="add-subfolder-btn" class="icon-btn small-btn hidden" title="Add subfolder">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" />
+                <path d="M12 10v6" />
+                <path d="M9 13h6" />
+            </svg>
+        </button>
+    </div>
+
+    <div id="grid-scroll-container">
+        <div id="subfolders-section" class="hidden">
+            <div id="subfolders-grid">
+                <!-- Subfolder cards will be dynamically inserted here -->
+            </div>
+            <hr class="section-divider" />
+        </div>
+
+        <div id="notes-grid">
+            <!-- Note and Image items will be dynamically inserted here -->
+        </div>
+
+        <div id="links-header" class="links-header hidden">
+            <h3 id="links-section-title" class="section-title">Links</h3>
+            <div class="io-dropdown-wrapper">
+                <button id="open-all-links-btn" class="icon-btn" title="Open all links in folder">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                        <polyline points="15 3 21 3 21 9" />
+                        <line x1="10" y1="14" x2="21" y2="3" />
+                    </svg>
+                </button>
+                <div class="io-dropdown" id="open-all-links-dropdown">
+                    <button class="io-dropdown-item" data-action="open-this-window">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                        </svg>
+                        In this window
+                    </button>
+                    <button class="io-dropdown-item" data-action="open-new-window">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M15 3h6v6" />
+                            <path d="M10 14L21 3" />
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                        </svg>
+                        In new window
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="links-container">
+            <!-- Link items will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <div id="drop-overlay">
+        <p>Drop to save</p>
+    </div>
+</main>
+
+<!-- Floating action button -->
+<button id="add-item-fab" title="Add new item">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 5v14" />
+        <path d="M5 12h14" />
+    </svg>
+</button>
+
+<!-- Notes-specific Modals -->
+
+<div id="add-item-modal" class="modal hidden">
+    <h3>Add New Item</h3>
+    <div class="tab-buttons">
+        <button class="tab-btn active" data-type="text">Note</button>
+        <button class="tab-btn" data-type="link">Link</button>
+        <button class="tab-btn" data-type="upload">Upload</button>
+    </div>
+    <div class="tab-content" id="text-input-container">
+        <div id="item-text-editor-container" class="notes-editor-container">
+        </div>
+    </div>
+    <div class="tab-content hidden" id="link-input-container">
+        <input type="text" id="item-link-url-input" placeholder="Enter URL">
+        <input type="text" id="item-link-title-input" placeholder="Optional title">
+    </div>
+    <div class="tab-content hidden" id="upload-input-container">
+        <div class="upload-area">
+            <p>Upload one or more files.</p>
+            <button id="upload-files-btn">Select Files</button>
+        </div>
+    </div>
+    <div class="modal-compact-row">
+        <div class="tag-input-section">
+            <label>Tags</label>
+            <div class="tag-input-wrapper">
+                <input type="text" id="item-tags-input" placeholder="Type tag...">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tag-input-icon"><path d="m6 9 6 6 6-6"></path></svg>
+                <div id="tag-suggestions" class="tag-suggestions hidden"></div>
+            </div>
+        </div>
+
+        <div id="add-note-color-picker" class="color-picker-container">
+            <label>Color</label>
+            <div class="color-options">
+                <div class="custom-color-wrapper">
+                    <input type="color" id="add-custom-note-color" title="Choose custom color">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="custom-color-icon"><path d="m12 19 7-7 3 3-7 7-3-3z"></path><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="m2 2 5 5"></path><path d="m11 11 1 1"></path></svg>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="selected-tags-container" class="selected-tags-container"></div>
+    <div class="modal-actions">
+        <button id="cancel-add-item">Cancel</button>
+        <button id="save-item-btn">Save</button>
+    </div>
+    <input type="file" id="upload-file-input" class="hidden" multiple>
+</div>
+
+<div id="view-item-modal" class="modal hidden">
+    <div class="modal-header">
+        <h3 id="view-modal-title">View Note</h3>
+        <div class="notes-form-row">
+            <button id="open-in-tab-btn" class="icon-btn" title="Open in fully expanded tab">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                    <polyline points="15 3 21 3 21 9"></polyline>
+                    <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+            </button>
+            <button id="copy-item-btn" class="icon-btn" title="Copy content">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+    <div id="view-item-content" class="modal-content-view ql-editor notes-modal-content-no-pad"></div>
+    <div id="edit-editor-wrapper" class="hidden">
+        <div id="edit-item-editor-container" class="notes-view-editor-container">
+        </div>
+    </div>
+    <textarea id="edit-item-textarea" class="hidden"></textarea>
+    
+    <div class="modal-compact-row">
+        <div id="view-item-tags-section" class="item-tags-display-section">
+            <label>Tags</label>
+            <div id="edit-tags-input-wrapper" class="hidden">
+                <div class="tag-input-wrapper">
+                    <input type="text" id="edit-item-tags-input" placeholder="Add...">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tag-input-icon"><path d="m6 9 6 6 6-6"></path></svg>
+                    <div id="edit-tag-suggestions" class="tag-suggestions hidden"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="note-color-picker" class="color-picker-container hidden">
+            <label>Color</label>
+            <div class="color-options">
+                <div class="custom-color-wrapper">
+                    <input type="color" id="custom-note-color" title="Choose custom color">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="custom-color-icon"><path d="m12 19 7-7 3 3-7 7-3-3z"></path><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="m2 2 5 5"></path><path d="m11 11 1 1"></path></svg>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="view-item-tags-container" class="selected-tags-container"></div>
+    <div class="modal-actions">
+        <button id="move-item-btn">Move</button>
+        <button id="edit-item-btn">Edit</button>
+        <button id="save-edit-btn" class="hidden">Save</button>
+        <button id="Delete-view-modal">Delete</button>
+        <button id="close-view-modal">Close</button>
+    </div>
+</div>
+
+<div id="move-item-modal" class="modal hidden">
+    <h3>Move Item To...</h3>
+    <select id="move-folder-select"></select>
+    <div class="modal-actions">
+        <button id="cancel-move-item">Cancel</button>
+        <button id="confirm-move-item-btn">Move Item</button>
+    </div>
+</div>
+
+<!-- PIN Modals -->
+<div id="set-pin-modal" class="modal hidden">
+    <h3>Set Folder PIN</h3>
+    <p>Enter a numeric PIN to lock this folder.</p>
+    <input type="password" id="set-pin-input" pattern="[0-9]*" inputmode="numeric" placeholder="Enter PIN"
+        autocomplete="new-password" data-lpignore="true" data-1p-ignore="true">
+    <div class="modal-actions">
+        <button id="cancel-set-pin">Cancel</button>
+        <button id="save-set-pin">Save PIN</button>
+    </div>
+</div>
+
+<div id="enter-pin-modal" class="modal hidden">
+    <h3>Enter PIN</h3>
+    <p id="enter-pin-foldername">Enter PIN to unlock this folder.</p>
+    <input type="password" id="enter-pin-input" pattern="[0-9]*" inputmode="numeric" placeholder="Enter PIN"
+        autocomplete="new-password" data-lpignore="true" data-1p-ignore="true">
+    <p id="pin-error-msg" class="error-msg hidden">Incorrect PIN.</p>
+    <div class="modal-actions">
+        <button id="cancel-enter-pin">Cancel</button>
+        <button id="unlock-folder-btn">Unlock</button>
+    </div>
+</div>

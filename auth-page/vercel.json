@@ -1,0 +1,8 @@
+{
+  "name": "clippy-auth",
+  "public": true,
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/$1" }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "manifest_version": 3,
+  "name": "Personal Dashboard",
+  "version": "1.2",
+  "description": "A Notion-style personal dashboard to save links, notes, and images.",
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "permissions": [
+    "storage",
+    "contextMenus",
+    "activeTab",
+    "windows",
+    "clipboardRead",
+    "scripting",
+    "tabs"
+  ],
+  "externally_connectable": {
+    "matches": [
+      "https://*/*",
+      "http://localhost:*/*",
+      "http://127.0.0.1:*/*"
+    ]
+  },
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "password-manager/save_prompt.js",
+        "password-manager/content.js"
+      ],
+      "run_at": "document_end"
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; img-src 'self' data: https://s2.googleusercontent.com https://*.gstatic.com https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co;"
+  }
+}

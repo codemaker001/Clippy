@@ -1,0 +1,337 @@
+<!-- Settings Module — HTML Fragment (loaded by router) -->
+<div id="settings-main-container" class="settings-state-view active">
+    <h1 class="settings-main-title">Settings</h1>
+    <!-- Main Menu -->
+    <div id="settings-main-menu" class="settings-pane active">
+        <div class="settings-premium-promo">
+            <div class="promo-text">Unlock advanced security features, emergency access, and more with Premium. <br><a href="#" class="promo-link">Upgrade now</a></div>
+        </div>
+
+        <div class="settings-nav-list">
+            <div class="settings-nav-item" data-target="settings-sub-sync">
+                <svg class="settings-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <div class="settings-nav-label">Sync & account</div>
+                <svg class="settings-nav-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </div>
+            <div class="settings-nav-item" data-target="settings-sub-account">
+                <svg class="settings-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <div class="settings-nav-label">Account security</div>
+                <svg class="settings-nav-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </div>
+            <div class="settings-nav-item" data-target="settings-sub-autofill">
+                <svg class="settings-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
+                <div class="settings-nav-label">Autofill</div>
+                <svg class="settings-nav-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </div>
+            <div class="settings-nav-item" data-target="settings-sub-notifications">
+                <svg class="settings-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                <div class="settings-nav-label">Notifications</div>
+                <svg class="settings-nav-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </div>
+            <div class="settings-nav-item" data-target="settings-sub-vault">
+                <svg class="settings-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <div class="settings-nav-label">Vault options</div>
+                <svg class="settings-nav-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </div>
+            <div class="settings-nav-item" data-target="settings-sub-appearance">
+                <svg class="settings-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                <div class="settings-nav-label">Appearance</div>
+                <svg class="settings-nav-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </div>
+            <div class="settings-nav-item" data-target="settings-sub-general">
+                <svg class="settings-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                <div class="settings-nav-label">General settings</div>
+                <svg class="settings-nav-chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sub View: Account Security -->
+    <div id="settings-sub-account" class="settings-pane hidden">
+        <div class="settings-sub-header">
+            <button class="settings-back-btn"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+            <h2 class="settings-sub-title">Account security</h2>
+        </div>
+        <div class="settings-sub-content">
+            <h3 class="settings-group-title">Session management</h3>
+            <div class="settings-card">
+                <div class="settings-control-row">
+                    <div class="settings-info">
+                        <div class="settings-label">Vault Timeout</div>
+                        <div class="settings-desc">Lock vault after inactivity</div>
+                    </div>
+                    <select id="setting-vault-timeout" class="settings-select">
+                        <option value="0">Immediately</option>
+                        <option value="1">1 Minute</option>
+                        <option value="5" selected>5 Minutes</option>
+                        <option value="15">15 Minutes</option>
+                        <option value="60">1 Hour</option>
+                        <option value="-1">Never</option>
+                    </select>
+                </div>
+                <label class="settings-checkbox-row" for="setting-lock-on-close">
+                    <input type="checkbox" id="setting-lock-on-close" checked>
+                    <div class="settings-checkbox-custom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                    <div class="settings-info">
+                        <div class="settings-label">Lock on Browser Close</div>
+                        <div class="settings-desc">Require master password upon reopening browser</div>
+                    </div>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sub View: Autofill -->
+    <div id="settings-sub-autofill" class="settings-pane hidden">
+        <div class="settings-sub-header">
+            <button class="settings-back-btn"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+            <h2 class="settings-sub-title">Autofill</h2>
+        </div>
+        <div class="settings-sub-content">
+            <h3 class="settings-group-title">Autofill suggestions</h3>
+            <div class="settings-card">
+                <div class="settings-control-row">
+                    <div class="settings-info">
+                        <div class="settings-label">Save Prompt Timeout</div>
+                        <div class="settings-desc">Auto-dismiss the save prompt popup</div>
+                    </div>
+                    <select id="setting-save-timeout" class="settings-select">
+                        <option value="5">5 Seconds</option>
+                        <option value="10" selected>10 Seconds</option>
+                        <option value="30">30 Seconds</option>
+                        <option value="-1">Never Close</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sub View: Notifications -->
+    <div id="settings-sub-notifications" class="settings-pane hidden">
+        <div class="settings-sub-header">
+            <button class="settings-back-btn"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+            <h2 class="settings-sub-title">Notifications</h2>
+        </div>
+        <div class="settings-sub-content">
+            <h3 class="settings-group-title">Save to vault options</h3>
+            <div class="settings-card">
+                <label class="settings-checkbox-row" for="setting-ask-to-save">
+                    <input type="checkbox" id="setting-ask-to-save" checked>
+                    <div class="settings-checkbox-custom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                    <div class="settings-info">
+                        <div class="settings-label">Ask to save and update logins</div>
+                    </div>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sub View: Vault Options -->
+    <div id="settings-sub-vault" class="settings-pane hidden">
+        <div class="settings-sub-header">
+            <button class="settings-back-btn"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+            <h2 class="settings-sub-title">Vault options</h2>
+        </div>
+        <div class="settings-sub-content">
+            <h3 class="settings-group-title">Security & Defaults</h3>
+            <div class="settings-card">
+                <div class="settings-control-row">
+                    <div class="settings-info">
+                        <div class="settings-label">Clear Clipboard After</div>
+                        <div class="settings-desc">Remove copied items from clipboard</div>
+                    </div>
+                    <select id="setting-clipboard-clear" class="settings-select">
+                        <option value="10">10 Seconds</option>
+                        <option value="30" selected>30 Seconds</option>
+                        <option value="60">1 Minute</option>
+                        <option value="-1">Never</option>
+                    </select>
+                </div>
+                <div class="settings-control-row">
+                    <div class="settings-info">
+                        <div class="settings-label">Default Generator Length</div>
+                    </div>
+                    <input type="number" id="setting-generator-length" min="8" max="128" value="16" class="settings-number-input">
+                </div>
+                <div class="settings-control-row gen-options-row">
+                    <div class="settings-info gen-options-info">
+                        <div class="settings-label">Default Generator Options</div>
+                    </div>
+                    <div class="settings-checkbox-group gen-options-group">
+                        <label><input type="checkbox" id="setting-gen-upper" checked> A-Z</label>
+                        <label><input type="checkbox" id="setting-gen-lower" checked> a-z</label>
+                        <label><input type="checkbox" id="setting-gen-nums" checked> 0-9</label>
+                        <label><input type="checkbox" id="setting-gen-syms" checked> !@#</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sub View: Appearance -->
+    <div id="settings-sub-appearance" class="settings-pane hidden">
+        <div class="settings-sub-header">
+            <button class="settings-back-btn"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+            <h2 class="settings-sub-title">Appearance</h2>
+        </div>
+        <div class="settings-sub-content">
+            <h3 class="settings-group-title">Display</h3>
+            <div class="settings-card">
+                <div class="settings-control-row">
+                    <div class="settings-info">
+                        <div class="settings-label">Theme</div>
+                        <div class="settings-desc">Application color scheme</div>
+                    </div>
+                    <select id="setting-theme" class="settings-select">
+                        <option value="dark" selected>Dark</option>
+                        <option value="light" disabled>Light (Coming Soon)</option>
+                        <option value="system" disabled>System Match</option>
+                    </select>
+                </div>
+                <label class="settings-checkbox-row" for="setting-show-favicons">
+                    <input type="checkbox" id="setting-show-favicons" checked>
+                    <div class="settings-checkbox-custom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                    <div class="settings-info">
+                        <div class="settings-label">Display website favicons</div>
+                    </div>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sub View: General Settings -->
+    <div id="settings-sub-general" class="settings-pane hidden">
+        <div class="settings-sub-header">
+            <button class="settings-back-btn"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+            <h2 class="settings-sub-title">General settings</h2>
+        </div>
+        <div class="settings-sub-content">
+            <h3 class="settings-group-title">Startup</h3>
+            <div class="settings-card">
+                <div class="settings-control-row">
+                    <div class="settings-info">
+                        <div class="settings-label">Default Tab on Open</div>
+                    </div>
+                    <select id="setting-default-tab" class="settings-select">
+                        <option value="passwords" selected>Passwords</option>
+                        <option value="notes">Notes</option>
+                        <option value="secret-keys">Secret Keys</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sub View: Sync & Account -->
+    <div id="settings-sub-sync" class="settings-pane hidden">
+        <div class="settings-sub-header">
+            <button class="settings-back-btn"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+            <h2 class="settings-sub-title">Sync & account</h2>
+        </div>
+        <div class="settings-sub-content">
+
+            <!-- Signed Out State -->
+            <div id="sync-signed-out" class="sync-state-view">
+                <div class="sync-promo-card">
+                    <svg class="sync-promo-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <h3 class="sync-promo-title">Sync your data across devices</h3>
+                    <p class="sync-promo-desc">Sign in to back up your notes, passwords, and settings. Your vault stays encrypted. Works with Google, GitHub, or Email.</p>
+                    <button id="sync-sign-in-btn" class="auth-open-btn">
+                        <svg class="auth-open-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="18" height="18" stroke-width="2">
+                            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                            <polyline points="10 17 15 12 10 7"></polyline>
+                            <line x1="15" y1="12" x2="3" y2="12"></line>
+                        </svg>
+                        Sign In / Create Account
+                    </button>
+                </div>
+            </div>
+
+            <!-- Signed In State -->
+            <div id="sync-signed-in" class="sync-state-view hidden">
+                <!-- Profile Card -->
+                <div class="sync-profile-card">
+                    <img id="sync-avatar" class="sync-avatar" src="" alt="Avatar">
+                    <div class="sync-profile-info">
+                        <div class="sync-profile-name">
+                            <span id="sync-user-name">User</span>
+                            <span id="sync-premium-badge" class="sync-premium-badge hidden">⭐ PREMIUM</span>
+                        </div>
+                        <div id="sync-user-email" class="sync-profile-email">user@email.com</div>
+                    </div>
+                </div>
+
+                <!-- Sync Status -->
+                <div class="settings-card">
+                    <div class="settings-control-row">
+                        <div class="settings-info">
+                            <div class="settings-label">Sync status</div>
+                            <div id="sync-last-synced" class="settings-desc">Never synced</div>
+                        </div>
+                        <button id="sync-now-btn" class="sync-now-btn" title="Sync now">
+                            <svg class="sync-now-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <polyline points="1 20 1 14 7 14"></polyline>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                            </svg>
+                            Sync Now
+                        </button>
+                    </div>
+                    <label class="settings-checkbox-row" for="sync-auto-toggle">
+                        <input type="checkbox" id="sync-auto-toggle" checked>
+                        <div class="settings-checkbox-custom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                        <div class="settings-info">
+                            <div class="settings-label">Auto-sync on changes</div>
+                            <div class="settings-desc">Automatically back up when you make changes</div>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Premium -->
+                <h3 class="settings-group-title">Membership</h3>
+                <div class="settings-card">
+                    <div id="sync-premium-section" class="sync-premium-section">
+                        <div id="sync-premium-free" class="sync-premium-state">
+                            <div class="settings-info">
+                                <div class="settings-label">Free plan</div>
+                                <div class="settings-desc">Upgrade for advanced features and priority support</div>
+                            </div>
+                            <button id="sync-upgrade-btn" class="sync-upgrade-btn">⭐ Upgrade to Premium</button>
+                        </div>
+                        <div id="sync-premium-active" class="sync-premium-state hidden">
+                            <div class="settings-info">
+                                <div class="settings-label">⭐ Premium active</div>
+                                <div id="sync-premium-since" class="settings-desc">Since —</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Link -->
+                <div id="sync-admin-section" class="hidden">
+                    <h3 class="settings-group-title">Administration</h3>
+                    <div class="settings-card">
+                        <div class="settings-control-row">
+                            <div class="settings-info">
+                                <div class="settings-label">Admin Dashboard</div>
+                                <div class="settings-desc">View all users and manage premium status</div>
+                            </div>
+                            <button id="sync-admin-btn" class="sync-admin-btn">Open Dashboard</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sign Out -->
+                <div class="sync-signout-section">
+                    <button id="sync-sign-out-btn" class="sync-sign-out-btn">Sign out</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
