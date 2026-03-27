@@ -14,7 +14,17 @@
     const CONFIG = window.AUTH_PAGE_CONFIG || {};
 
     // Initialize Supabase client
-    const supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+    // persistSession: false — the auth page is only a pass-through for getting tokens.
+    // The extension manages its own session via chrome.storage. We do NOT want the
+    // Supabase SDK to cache a session in the browser's localStorage, which would cause
+    // the user to be auto-signed-in on the next visit even after signing out.
+    const supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
+        auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: true  // still needed to pick up the OAuth hash fragment
+        }
+    });
 
     // ========================================================================
     // VIEW MANAGEMENT

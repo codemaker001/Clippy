@@ -673,6 +673,79 @@ const PasswordManager = (function () {
 
         if (btnLockVault) btnLockVault.addEventListener('click', lockVault);
 
+        // --- Reset Extension button (on the locked/login screen) ---
+        const btnResetExt = document.getElementById('pm-reset-ext-btn');
+        const resetModalOverlay = document.getElementById('pm-reset-modal-overlay');
+        const resetConfirmInput = document.getElementById('pm-reset-confirm-input');
+        const btnResetConfirm = document.getElementById('pm-reset-confirm-btn');
+        const btnResetCancel = document.getElementById('pm-reset-cancel-btn');
+
+        function openResetModal() {
+            if (!resetModalOverlay) return;
+            if (resetConfirmInput) resetConfirmInput.value = '';
+            if (btnResetConfirm) btnResetConfirm.disabled = true;
+            resetModalOverlay.classList.remove('hidden');
+            setTimeout(() => { if (resetConfirmInput) resetConfirmInput.focus(); }, 80);
+        }
+
+        function closeResetModal() {
+            if (resetModalOverlay) resetModalOverlay.classList.add('hidden');
+            if (resetConfirmInput) resetConfirmInput.value = '';
+            if (btnResetConfirm) btnResetConfirm.disabled = true;
+        }
+
+        if (btnResetExt) btnResetExt.addEventListener('click', openResetModal);
+        if (btnResetCancel) btnResetCancel.addEventListener('click', closeResetModal);
+
+        // Close on backdrop click
+        if (resetModalOverlay) {
+            resetModalOverlay.addEventListener('click', (e) => {
+                if (e.target === resetModalOverlay) closeResetModal();
+            });
+        }
+
+        // Enable confirm button only when user types exactly "RESET"
+        if (resetConfirmInput) {
+            resetConfirmInput.addEventListener('input', () => {
+                if (btnResetConfirm) {
+                    btnResetConfirm.disabled = resetConfirmInput.value !== 'RESET';
+                }
+            });
+        }
+
+        // Perform the wipe
+        if (btnResetConfirm) {
+            btnResetConfirm.addEventListener('click', async () => {
+                if (resetConfirmInput && resetConfirmInput.value !== 'RESET') return;
+
+                btnResetConfirm.disabled = true;
+                btnResetConfirm.textContent = 'Resetting…';
+
+                try {
+                    // Wipe all local extension storage (vault, settings, sync state, etc.)
+                    await new Promise(resolve => chrome.storage.local.clear(resolve));
+                    // Wipe session storage (auto-unlock session)
+                    await new Promise(resolve => chrome.storage.session.clear(resolve));
+                    // Wipe IndexedDB — notes (folders + items) are stored here, not in chrome.storage
+                    await new Promise((resolve, reject) => {
+                        // Close any open connection first to avoid blocked state
+                        if (globalThis.AppDB && globalThis.AppDB.getDB()) {
+                            try { globalThis.AppDB.getDB().close(); } catch (_) {}
+                        }
+                        const req = indexedDB.deleteDatabase(AppDB.DB_NAME || 'PersonalDashboardDB');
+                        req.onsuccess = resolve;
+                        req.onerror = () => reject(req.error);
+                        req.onblocked = resolve; // proceed even if blocked
+                    });
+                } catch (err) {
+                    console.error('[Reset Extension] Storage clear failed:', err);
+                }
+
+                // Reload the popup to start fresh
+                window.location.reload();
+            });
+        }
+
         // Populate Phase 3 DOM elements and bind their events
         bindUnlockedViewEvents();
     }
