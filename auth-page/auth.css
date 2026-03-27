@@ -603,3 +603,33 @@ body {
         padding: 24px;
     }
 }
+
+/* ===== Master Password Strength Indicator ===== */
+.master-pw-strength {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.master-pw-strength-bar {
+    flex: 1;
+    height: 4px;
+    background: rgba(100, 116, 139, 0.2);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.master-pw-strength-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 2px;
+    transition: width 0.3s ease, background 0.3s ease;
+}
+
+.master-pw-strength-label {
+    font-size: 11px;
+    font-weight: 600;
+    min-width: 70px;
+    text-align: right;
+    transition: color 0.3s ease;
+}

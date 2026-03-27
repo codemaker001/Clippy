@@ -34,7 +34,8 @@
         signin: document.getElementById('view-signin'),
         signup: document.getElementById('view-signup'),
         forgot: document.getElementById('view-forgot'),
-        success: document.getElementById('view-success')
+        success: document.getElementById('view-success'),
+        masterPassword: document.getElementById('view-master-password')
     };
 
     function showView(name) {
@@ -112,9 +113,20 @@
     // ========================================================================
 
     let _authSuccessHandled = false; // Prevent duplicate sends
+    let _pendingSession = null; // Stores session while user creates master password
+    let _isNewSignup = false; // Track if this is a new sign-up vs sign-in
 
-    async function handleAuthSuccess(session) {
+    async function handleAuthSuccess(session, options = {}) {
         if (_authSuccessHandled) return;
+
+        // For new sign-ups, show master password creation step first
+        if (_isNewSignup && !options.skipMasterPassword && !options.vaultKeys) {
+            _pendingSession = session;
+            showView('masterPassword');
+            document.getElementById('master-pw-input')?.focus();
+            return;
+        }
+
         _authSuccessHandled = true;
 
         try {
@@ -134,6 +146,11 @@
                 refreshToken: session.refresh_token,
                 profile
             };
+
+            // Attach vault keys if master password was created during sign-up
+            if (options.vaultKeys) {
+                authData.vaultKeys = options.vaultKeys;
+            }
 
             // Try to send to extension
             const extensionId = CONFIG.EXTENSION_ID;
@@ -265,7 +282,7 @@
         }
     });
 
-    // Sign Up
+    // Sign Up — shows master password step after account creation
     document.getElementById('form-signup')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const name = document.getElementById('signup-name').value.trim();
@@ -277,6 +294,7 @@
         btn.textContent = 'Creating account...';
 
         try {
+            _isNewSignup = true; // Mark as new sign-up so master password step is shown
             const { data, error } = await supabaseClient.auth.signUp({
                 email,
                 password,
@@ -287,18 +305,99 @@
             if (error) throw error;
 
             if (data.session) {
-                // Auto-confirmed (e.g. when email confirmation is disabled)
+                // Auto-confirmed — show master password creation step
                 await handleAuthSuccess(data.session);
             } else {
                 // Email confirmation required
+                _isNewSignup = false;
                 showError('Check your email to confirm your account, then sign in.');
                 showView('signin');
             }
         } catch (err) {
             showError(supabaseErrorToMessage(err));
+            _isNewSignup = false;
         } finally {
             btn.disabled = false;
             btn.textContent = 'Create Account';
+        }
+    });
+
+    // ========================================================================
+    // MASTER PASSWORD CREATION (shown after sign-up)
+    // ========================================================================
+
+    // Strength indicator
+    const masterPwInput = document.getElementById('master-pw-input');
+    const strengthFill = document.getElementById('master-pw-strength-fill');
+    const strengthLabel = document.getElementById('master-pw-strength-label');
+
+    if (masterPwInput) {
+        masterPwInput.addEventListener('input', () => {
+            const pw = masterPwInput.value;
+            let score = 0;
+            if (pw.length >= 8) score++;
+            if (pw.length >= 12) score++;
+            if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+            if (/[0-9]/.test(pw)) score++;
+            if (/[^A-Za-z0-9]/.test(pw)) score++;
+
+            const levels = ['', 'Weak', 'Fair', 'Good', 'Strong', 'Very Strong'];
+            const colors = ['', '#ef4444', '#f59e0b', '#eab308', '#22c55e', '#10b981'];
+            const widths = ['0%', '20%', '40%', '60%', '80%', '100%'];
+
+            if (strengthFill) {
+                strengthFill.style.width = widths[score];
+                strengthFill.style.background = colors[score];
+            }
+            if (strengthLabel) {
+                strengthLabel.textContent = levels[score];
+                strengthLabel.style.color = colors[score];
+            }
+        });
+    }
+
+    // Master password form submit
+    document.getElementById('form-master-password')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const pw = document.getElementById('master-pw-input').value;
+        const confirmPw = document.getElementById('master-pw-confirm').value;
+        const btn = document.getElementById('btn-create-master-pw');
+
+        if (pw.length < 8) {
+            showError('Master password must be at least 8 characters.');
+            return;
+        }
+        if (pw !== confirmPw) {
+            showError('Passwords do not match.');
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Encrypting vault...';
+
+        try {
+            // Derive vault keys client-side (master password never leaves this page)
+            const vaultKeys = await CryptoLite.deriveVaultKeys(pw);
+
+            // Send session + vault keys to extension
+            if (_pendingSession) {
+                await handleAuthSuccess(_pendingSession, { vaultKeys });
+            }
+        } catch (err) {
+            console.error('Master password creation error:', err);
+            showError('Failed to create vault encryption keys. Please try again.');
+            _authSuccessHandled = false;
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Set Master Password';
+        }
+    });
+
+    // Skip master password
+    document.getElementById('link-skip-master-pw')?.addEventListener('click', async () => {
+        if (_pendingSession) {
+            await handleAuthSuccess(_pendingSession, { skipMasterPassword: true });
         }
     });
 

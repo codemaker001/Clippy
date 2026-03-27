@@ -1628,6 +1628,24 @@ const NotesApp = (function () {
         // Bind events
         bindEvents();
 
+        // Show Secure Vault banner if vault is not secured
+        const notesBanner = document.getElementById('notes-secure-vault-banner');
+        if (notesBanner && window.vaultService) {
+            window.vaultService.isSecured().then(secured => {
+                notesBanner.classList.toggle('hidden', !!secured);
+            });
+        }
+        const notesSecureBtn = document.getElementById('notes-secure-vault-btn');
+        if (notesSecureBtn) {
+            notesSecureBtn.addEventListener('click', () => {
+                if (globalThis.SyncService) {
+                    SyncService.signIn();
+                } else if (globalThis.AppRouter) {
+                    globalThis.AppRouter.switchTo('settings');
+                }
+            });
+        }
+
         // Load content
         await refreshExistingTags();
         await renderFolders();

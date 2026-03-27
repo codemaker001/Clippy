@@ -1,8 +1,11 @@
 /**
  * Vault State Manager
  * 
- * Handles the persistence of encrypted data in chrome.storage.local
- * and manages the lifecycle of the in-memory master key.
+ * Supports TWO modes:
+ * 1. PLAINTEXT mode — entries stored unencrypted (when user is not signed in)
+ * 2. ENCRYPTED mode — AES-GCM encrypted with master password (after sign-in)
+ * 
+ * The mode is determined by whether pm_vault_keys exists in storage.
  */
 
 class VaultService {
@@ -10,10 +13,13 @@ class VaultService {
         this.crypto = cryptoService;
         this.STORAGE_KEY = 'pm_vault_data';
         this.KEYS_KEY = 'pm_vault_keys';
+        this.PLAINTEXT_KEY = 'pm_vault_plaintext';
         this.masterKey = null; // Contains the DEK (Data Encryption Key) in memory
         this.isUnlocked = false;
+        this._isSecured = false; // true when vault keys exist (encrypted mode)
+        this._plaintextLoaded = false; // true when plaintext data has been loaded into cache
 
-        // Caches the unencrypted vault data while unlocked
+        // Caches the unencrypted vault data while unlocked (or in plaintext mode)
         this.vaultCache = {
             entries: [],
             categories: [], // Folders, tags, etc.
@@ -22,13 +28,154 @@ class VaultService {
     }
 
     /**
-     * Checks if a vault currently exists in local storage
+     * Checks if the vault is secured with a master password (encrypted mode).
+     * @returns {Promise<boolean>}
+     */
+    async isSecured() {
+        return new Promise((resolve) => {
+            chrome.storage.local.get([this.KEYS_KEY], (result) => {
+                this._isSecured = !!result[this.KEYS_KEY];
+                resolve(this._isSecured);
+            });
+        });
+    }
+
+    /**
+     * Checks if any vault data exists (plaintext OR encrypted).
      * @returns {Promise<boolean>}
      */
     async hasVault() {
         return new Promise((resolve) => {
-            chrome.storage.local.get([this.STORAGE_KEY], (result) => {
-                resolve(result[this.STORAGE_KEY] ? true : false);
+            chrome.storage.local.get([this.STORAGE_KEY, this.PLAINTEXT_KEY, this.KEYS_KEY], (result) => {
+                this._isSecured = !!result[this.KEYS_KEY];
+                const hasEncrypted = !!result[this.STORAGE_KEY];
+                const hasPlaintext = !!result[this.PLAINTEXT_KEY];
+                resolve(hasEncrypted || hasPlaintext);
+            });
+        });
+    }
+
+    /**
+     * Loads plaintext vault data into cache. Called instead of unlock() when not secured.
+     * @returns {Promise<boolean>}
+     */
+    async loadPlaintext() {
+        return new Promise((resolve) => {
+            chrome.storage.local.get([this.PLAINTEXT_KEY], (result) => {
+                const data = result[this.PLAINTEXT_KEY];
+                if (data) {
+                    this.vaultCache = data;
+                } else {
+                    // Initialize empty plaintext vault
+                    this.vaultCache = {
+                        entries: [],
+                        categories: [
+                            { id: 'cat_logins', name: 'Logins', type: 'system' },
+                            { id: 'cat_favorites', name: 'Favorites', type: 'system' },
+                            { id: 'cat_email', name: 'Email', type: 'system' },
+                            { id: 'cat_social', name: 'Social', type: 'system' },
+                            { id: 'cat_work', name: 'Work', type: 'system' },
+                            { id: 'cat_bank', name: 'Finance', type: 'system' },
+                            { id: 'cat_sensitive', name: 'Sensitive', type: 'system' },
+                            { id: 'cat_others', name: 'Others', type: 'system' }
+                        ],
+                        settings: { autoLockMinutes: 15 }
+                    };
+                }
+                this.isUnlocked = true;
+                this._plaintextLoaded = true;
+                resolve(true);
+            });
+        });
+    }
+
+    /**
+     * Saves plaintext vault data directly (no encryption).
+     */
+    async _savePlaintext() {
+        return new Promise((resolve, reject) => {
+            chrome.storage.local.set({
+                [this.PLAINTEXT_KEY]: this.vaultCache,
+                unpushedVaultChanges: true
+            }, () => {
+                if (chrome.runtime.lastError) reject(chrome.runtime.lastError);
+                else {
+                    globalThis.SyncService?.triggerAutoSync();
+                    resolve();
+                }
+            });
+        });
+    }
+
+    /**
+     * Secures the vault by encrypting all plaintext data with a master password.
+     * Called after user signs in and creates a master password.
+     * @param {string} masterPassword
+     * @returns {Promise<boolean>}
+     */
+    async secureVault(masterPassword) {
+        // Load plaintext data if not already loaded
+        if (!this._plaintextLoaded) {
+            await this.loadPlaintext();
+        }
+
+        // Save current cache contents before creating vault
+        const savedCache = JSON.parse(JSON.stringify(this.vaultCache));
+
+        // 1. Generate DEK
+        const dekBase64 = this.crypto.generateDataKeyBase64();
+        const dekKey = await this.crypto.importDataKey(dekBase64);
+
+        // 2. Encrypt the vault cache with the DEK
+        const jsonString = JSON.stringify(savedCache);
+        const vaultEnc = await this.crypto.encrypt(jsonString, dekKey);
+
+        const vaultPayload = {
+            v: 2,
+            iv: vaultEnc.iv,
+            data: vaultEnc.ciphertext,
+            version: 1
+        };
+
+        // 3. Derive KEK from password
+        const salt = this.crypto.generateRandomBytes(16);
+        const saltBase64 = this.crypto.bufferToBase64(salt.buffer);
+        const kek = await this.crypto.deriveMasterKey(masterPassword, salt);
+
+        // 4. Encrypt DEK and Validator
+        const edekEnc = await this.crypto.encrypt(dekBase64, kek);
+        const validatorEnc = await this.crypto.encrypt('VAULT_OK', dekKey);
+
+        const keysPayload = {
+            salt: saltBase64,
+            edek: edekEnc.ciphertext,
+            edek_iv: edekEnc.iv,
+            validator: validatorEnc.ciphertext,
+            validator_iv: validatorEnc.iv
+        };
+
+        // 5. Save encrypted vault + keys, and remove plaintext
+        return new Promise((resolve, reject) => {
+            chrome.storage.local.set({
+                [this.STORAGE_KEY]: vaultPayload,
+                [this.KEYS_KEY]: keysPayload,
+                unpushedVaultChanges: true
+            }, () => {
+                if (chrome.runtime.lastError) return reject(chrome.runtime.lastError);
+
+                // Remove plaintext data
+                chrome.storage.local.remove([this.PLAINTEXT_KEY], () => {
+                    this._isSecured = true;
+                    this._plaintextLoaded = false;
+                    this.masterKey = dekKey;
+                    this.isUnlocked = true;
+                    this.vaultCache = savedCache;
+
+                    this._storeSession(masterPassword);
+                    globalThis.SyncService?.triggerAutoSync();
+                    this._dispatchEvent('vaultUnlocked');
+                    resolve(true);
+                });
             });
         });
     }
@@ -276,6 +423,8 @@ class VaultService {
      * Nullifies the in-memory key and clears the cache
      */
     lock() {
+        // Only lock if vault is secured (encrypted mode)
+        if (!this._isSecured) return;
         chrome.storage.session.remove(['vault_session']); // Clear auto-unlock session
         this._lock();
         this._dispatchEvent('vaultLocked');
@@ -284,6 +433,7 @@ class VaultService {
     _lock() {
         this.masterKey = null;
         this.isUnlocked = false;
+        this._plaintextLoaded = false;
         this.vaultCache = { entries: [], categories: [], settings: {} };
     }
 
@@ -291,7 +441,7 @@ class VaultService {
      * Gets all entries from the vault cache.
      */
     getEntries() {
-        if (!this.isUnlocked) throw new Error("Vault is locked");
+        if (!this.isUnlocked && !this._plaintextLoaded) throw new Error("Vault is locked");
         return this.vaultCache.entries;
     }
 
@@ -299,6 +449,11 @@ class VaultService {
      * Saves changes to the vault cache to chrome storage by re-encrypting.
      */
     async _saveToStorage() {
+        // Plaintext mode — save without encryption
+        if (!this._isSecured) {
+            return this._savePlaintext();
+        }
+
         if (!this.isUnlocked || !this.masterKey) {
             throw new Error("Cannot save: Vault is locked.");
         }
@@ -336,7 +491,7 @@ class VaultService {
      * Adds a new entry and persists to storage
      */
     async addEntry(entry) {
-        if (!this.isUnlocked) throw new Error("Vault is locked");
+        if (!this.isUnlocked && !this._plaintextLoaded) throw new Error("Vault is locked");
 
         entry.id = 'entry_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         entry.createdAt = new Date().toISOString();
@@ -351,7 +506,7 @@ class VaultService {
      * Updates an existing entry
      */
     async updateEntry(id, updatedFields) {
-        if (!this.isUnlocked) throw new Error("Vault is locked");
+        if (!this.isUnlocked && !this._plaintextLoaded) throw new Error("Vault is locked");
 
         const index = this.vaultCache.entries.findIndex(e => e.id === id);
         if (index === -1) throw new Error("Entry not found");
@@ -370,7 +525,7 @@ class VaultService {
      * Deletes an entry
      */
     async deleteEntry(id) {
-        if (!this.isUnlocked) throw new Error("Vault is locked");
+        if (!this.isUnlocked && !this._plaintextLoaded) throw new Error("Vault is locked");
 
         const initialLength = this.vaultCache.entries.length;
         this.vaultCache.entries = this.vaultCache.entries.filter(e => e.id !== id);
@@ -387,7 +542,7 @@ class VaultService {
      * Adds a new custom category (folder)
      */
     async addCategory(name) {
-        if (!this.isUnlocked) throw new Error("Vault is locked");
+        if (!this.isUnlocked && !this._plaintextLoaded) throw new Error("Vault is locked");
 
         const newCategory = {
             id: 'cat_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
@@ -404,7 +559,7 @@ class VaultService {
      * Updates an existing custom category
      */
     async updateCategory(id, newName) {
-        if (!this.isUnlocked) throw new Error("Vault is locked");
+        if (!this.isUnlocked && !this._plaintextLoaded) throw new Error("Vault is locked");
 
         const category = this.vaultCache.categories.find(c => c.id === id);
         if (!category) throw new Error("Category not found");
@@ -419,7 +574,7 @@ class VaultService {
      * Deletes a custom category
      */
     async deleteCategory(id) {
-        if (!this.isUnlocked) throw new Error("Vault is locked");
+        if (!this.isUnlocked && !this._plaintextLoaded) throw new Error("Vault is locked");
 
         const category = this.vaultCache.categories.find(c => c.id === id);
         if (category && category.type === 'system') {

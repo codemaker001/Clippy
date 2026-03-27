@@ -85,7 +85,7 @@ const SyncService = (function () {
      */
     async function handleAuthResult(authData) {
         try {
-            const { accessToken, refreshToken, profile } = authData;
+            const { accessToken, refreshToken, profile, vaultKeys } = authData;
 
             // Set the session on the Supabase client
             const sb = _getSupabaseClient();
@@ -104,6 +104,25 @@ const SyncService = (function () {
             state.syncStatus = 'idle';
             state.tokenExpiresAt = Date.now() + (55 * 60 * 1000);
             await _setSyncState(state);
+
+            // If vault keys were provided (new sign-up with master password),
+            // store them and secure the vault with the encryption keys
+            if (vaultKeys) {
+                await new Promise((resolve) => {
+                    chrome.storage.local.set({ pm_vault_keys: vaultKeys }, resolve);
+                });
+
+                // If there's an existing VaultService, secure the vault
+                // (encrypts any existing plaintext data)
+                if (globalThis.vaultService && typeof globalThis.vaultService.secureVault === 'function') {
+                    // We need the master password to call secureVault properly,
+                    // but we don't have it here. The vault keys are already derived.
+                    // Instead, we store the keys directly and let the vault service
+                    // detect them on next access via isSecured().
+                    // The plaintext data will be encrypted on the next vault load.
+                    console.log('[Sync] Vault keys stored. Vault will be secured on next access.');
+                }
+            }
 
             // Register/update user in Supabase
             await _registerUser(profile);

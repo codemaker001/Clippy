@@ -21,32 +21,33 @@ const SecretKeys = (function () {
     async function checkSKVaultStatus() {
         if (!window.vaultService) return;
 
+        const secured = await window.vaultService.isSecured();
+
+        if (!secured) {
+            // PLAINTEXT MODE — skip lock screen
+            await window.vaultService.loadPlaintext();
+            showSKUnlockedView();
+            return;
+        }
+
         if (window.vaultService.isUnlocked) {
             showSKUnlockedView();
             return;
         }
 
-        // Try to auto-unlock using a stored session before showing the lock screen
+        // Try auto-unlock
         const autoUnlocked = await window.vaultService.tryAutoUnlock();
         if (autoUnlocked) {
             showSKUnlockedView();
             return;
         }
 
-        const hasVault = await window.vaultService.hasVault();
-        if (hasVault) {
-            isSKNewVault = false;
-            skLoginTitle.textContent = "Unlock Vault";
-            skLoginSubtitle.textContent = "Enter your master password";
-            btnSKUnlock.textContent = "Unlock";
-            if (skSetupFooter) skSetupFooter.classList.add('hidden');
-        } else {
-            isSKNewVault = true;
-            skLoginTitle.textContent = "Create Vault";
-            skLoginSubtitle.textContent = "Create a strong master password";
-            btnSKUnlock.textContent = "Create Vault";
-            if (skSetupFooter) skSetupFooter.classList.remove('hidden');
-        }
+        // Show lock screen (unlock only)
+        isSKNewVault = false;
+        skLoginTitle.textContent = "Unlock Vault";
+        skLoginSubtitle.textContent = "Enter your master password";
+        btnSKUnlock.textContent = "Unlock";
+        if (skSetupFooter) skSetupFooter.classList.add('hidden');
 
         showSKLockedView();
     }
@@ -62,24 +63,17 @@ const SecretKeys = (function () {
         }
 
         btnSKUnlock.disabled = true;
-        btnSKUnlock.textContent = isSKNewVault ? "Creating..." : "Unlocking...";
+        btnSKUnlock.textContent = "Unlocking...";
 
         try {
-            if (isSKNewVault) {
-                if (password.length < 8) throw new Error("Master password must be at least 8 characters.");
-                await window.vaultService.createVault(password);
-                inputSKPassword.value = '';
-                checkSKVaultStatus();
-            } else {
-                await window.vaultService.unlock(password);
-                inputSKPassword.value = '';
-                showSKUnlockedView();
-            }
+            await window.vaultService.unlock(password);
+            inputSKPassword.value = '';
+            showSKUnlockedView();
         } catch (error) {
             showSKError(error.message);
         } finally {
             btnSKUnlock.disabled = false;
-            btnSKUnlock.textContent = isSKNewVault ? "Create Vault" : "Unlock";
+            btnSKUnlock.textContent = "Unlock";
         }
     }
 
@@ -103,6 +97,12 @@ const SecretKeys = (function () {
     function showSKUnlockedView() {
         if (viewLocked) viewLocked.classList.add('hidden');
         if (viewUnlocked) viewUnlocked.classList.remove('hidden');
+
+        // Show/hide Secure Vault banner
+        const secureBanner = document.getElementById('sk-secure-vault-banner');
+        if (secureBanner) {
+            secureBanner.classList.toggle('hidden', !!window.vaultService._isSecured);
+        }
 
         // Setup SK specific sidebar categories if they don't exist
         setupSKCategories();
@@ -152,7 +152,7 @@ const SecretKeys = (function () {
     }
 
     function renderSidebar() {
-        if (!window.vaultService || !window.vaultService.isUnlocked) return;
+        if (!window.vaultService || (!window.vaultService.isUnlocked && !window.vaultService._plaintextLoaded)) return;
 
         // --- System categories in sk-category-list ---
         const sysCats = (window.vaultService.vaultCache.skCategories || []).filter(c => c.type !== 'custom');
@@ -271,7 +271,7 @@ const SecretKeys = (function () {
     // --- Core Rendering Loop (Cards & Standalone) ---
 
     function renderVaultItems() {
-        if (!window.vaultService || !window.vaultService.isUnlocked) return;
+        if (!window.vaultService || (!window.vaultService.isUnlocked && !window.vaultService._plaintextLoaded)) return;
 
         listEntries.innerHTML = '';
 
@@ -656,6 +656,18 @@ const SecretKeys = (function () {
         if (inputSKPassword) {
             inputSKPassword.addEventListener('keydown', e => {
                 if (e.key === 'Enter') { e.preventDefault(); handleSKAuthSubmit(); }
+            });
+        }
+
+        // --- Secure Vault button ---
+        const btnSKSecureVault = document.getElementById('sk-secure-vault-btn');
+        if (btnSKSecureVault) {
+            btnSKSecureVault.addEventListener('click', () => {
+                if (globalThis.SyncService) {
+                    SyncService.signIn();
+                } else if (globalThis.AppRouter) {
+                    globalThis.AppRouter.switchTo('settings');
+                }
             });
         }
 

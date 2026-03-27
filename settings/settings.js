@@ -334,19 +334,27 @@ const SettingsApp = (function() {
      * Public init — called by AppRouter after HTML is loaded.
      */
     async function init() {
-        if (window.vaultService && !window.vaultService.isUnlocked) {
-            // Force user to unlock vault first
-            if (globalThis.AppRouter) {
-                // Set a flag so the password manager knows where to return us
-                sessionStorage.setItem('pm_post_unlock_redirect', 'settings');
-                globalThis.AppRouter.switchTo('passwords');
-                return;
-            }
-        }
+        // Settings are always accessible (no vault lock gate)
         await loadSettings();
         bindUIEvents();
         bindSyncEvents();
         await updateSyncUI();
+
+        // Show Secure Vault banner if vault is not secured
+        const settingsBanner = document.getElementById('settings-secure-vault-banner');
+        if (settingsBanner && window.vaultService) {
+            window.vaultService.isSecured().then(secured => {
+                settingsBanner.classList.toggle('hidden', !!secured);
+            });
+        }
+        const settingsSecureBtn = document.getElementById('settings-secure-vault-btn');
+        if (settingsSecureBtn) {
+            settingsSecureBtn.addEventListener('click', () => {
+                if (globalThis.SyncService) {
+                    SyncService.signIn();
+                }
+            });
+        }
     }
 
     // Expose API

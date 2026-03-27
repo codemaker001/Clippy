@@ -31,19 +31,32 @@ const PasswordManager = (function () {
     }
 
     /**
-     * Checks if a vault exists to set up the login screen correctly
-     * (Create vs Unlock mode)
+     * Checks vault mode and decides which view to show:
+     * - NOT secured (no master password) → load plaintext, skip lock, show unlocked
+     * - Secured and unlocked → show unlocked
+     * - Secured and locked → show lock screen
      */
     async function checkVaultStatus() {
         if (!window.vaultService) return;
 
+        const secured = await window.vaultService.isSecured();
+
+        if (!secured) {
+            // PLAINTEXT MODE — no master password, skip lock screen
+            await window.vaultService.loadPlaintext();
+            showUnlockedView();
+            handlePostUnlockRedirect();
+            return;
+        }
+
+        // ENCRYPTED MODE — check if already unlocked
         if (window.vaultService.isUnlocked) {
             showUnlockedView();
             handlePostUnlockRedirect();
             return;
         }
 
-        // Try to auto-unlock using a stored session before showing the lock screen
+        // Try auto-unlock from session
         const autoUnlocked = await window.vaultService.tryAutoUnlock();
         if (autoUnlocked) {
             syncVaultWithBackground();
@@ -52,29 +65,19 @@ const PasswordManager = (function () {
             return;
         }
 
-        const hasVault = await window.vaultService.hasVault();
-        if (hasVault) {
-            // Standard Unlock Mode
-            isNewVault = false;
-            loginTitle.textContent = "Unlock Vault";
-            loginSubtitle.textContent = "Enter your master password";
-            btnUnlock.textContent = "Unlock";
-            setupFooter.classList.add('hidden');
-        } else {
-            // First time setup mode
-            isNewVault = true;
-            loginTitle.textContent = "Create Vault";
-            loginSubtitle.textContent = "Create a strong master password";
-            btnUnlock.textContent = "Create Vault";
-            setupFooter.classList.remove('hidden');
-        }
+        // Show lock screen (unlock only, no 'Create Vault' — that's done via sign-in now)
+        isNewVault = false;
+        loginTitle.textContent = "Unlock Vault";
+        loginSubtitle.textContent = "Enter your master password";
+        btnUnlock.textContent = "Unlock";
+        setupFooter.classList.add('hidden');
 
         showLockedView();
         inputMasterPassword.focus();
     }
 
     /**
-     * Handles the Unlock / Create button click
+     * Handles the Unlock button click (no more Create Vault — that's in auth flow)
      */
     async function handleAuthSubmit() {
         const password = inputMasterPassword.value.trim();
@@ -86,30 +89,19 @@ const PasswordManager = (function () {
         }
 
         btnUnlock.disabled = true;
-        btnUnlock.textContent = isNewVault ? "Creating..." : "Unlocking...";
+        btnUnlock.textContent = "Unlocking...";
 
         try {
-            if (isNewVault) {
-                // Determine minimum strength (basic check for now)
-                if (password.length < 8) {
-                    throw new Error("Master password must be at least 8 characters.");
-                }
-                await window.vaultService.createVault(password);
-                inputMasterPassword.value = '';
-                // Vault lock() is called during create, so re-check status to show 'Unlock' screen
-                checkVaultStatus();
-            } else {
-                await window.vaultService.unlock(password);
-                inputMasterPassword.value = ''; // clear on success
-                syncVaultWithBackground();
-                showUnlockedView();
-                handlePostUnlockRedirect();
-            }
+            await window.vaultService.unlock(password);
+            inputMasterPassword.value = '';
+            syncVaultWithBackground();
+            showUnlockedView();
+            handlePostUnlockRedirect();
         } catch (error) {
             showError(error.message);
         } finally {
             btnUnlock.disabled = false;
-            btnUnlock.textContent = isNewVault ? "Create Vault" : "Unlock";
+            btnUnlock.textContent = "Unlock";
         }
     }
 
@@ -195,7 +187,7 @@ const PasswordManager = (function () {
     }
 
     function renderSidebar() {
-        if (!window.vaultService || !window.vaultService.isUnlocked) return;
+        if (!window.vaultService || (!window.vaultService.isUnlocked && !window.vaultService._plaintextLoaded)) return;
         const categories = window.vaultService.vaultCache.categories || [];
 
         // System categories
@@ -317,7 +309,7 @@ const PasswordManager = (function () {
 
 
     function renderVaultItems() {
-        if (!window.vaultService || !window.vaultService.isUnlocked) return;
+        if (!window.vaultService || (!window.vaultService.isUnlocked && !window.vaultService._plaintextLoaded)) return;
 
         listEntries.innerHTML = '';
         // Only show passwords in the PM tab (default type is assumed password if not set)
@@ -442,6 +434,16 @@ const PasswordManager = (function () {
         if (listScrollContainer) listScrollContainer.classList.remove('hidden');
         if (currentCategoryTitle) currentCategoryTitle.textContent = 'All Items';
         if (searchBoxPM) searchBoxPM.value = '';
+
+        // Show/hide Secure Vault banner and Lock button based on vault state
+        const secureBanner = document.getElementById('pm-secure-vault-banner');
+        if (secureBanner) {
+            secureBanner.classList.toggle('hidden', !!window.vaultService._isSecured);
+        }
+        if (btnLockVault) {
+            btnLockVault.style.display = window.vaultService._isSecured ? '' : 'none';
+        }
+
         renderSidebar();
         renderVaultItems();
     }
@@ -672,6 +674,20 @@ const PasswordManager = (function () {
         }
 
         if (btnLockVault) btnLockVault.addEventListener('click', lockVault);
+
+        // --- Secure Vault button (shown when vault is NOT secured) ---
+        const btnSecureVault = document.getElementById('pm-secure-vault-btn');
+        if (btnSecureVault) {
+            btnSecureVault.addEventListener('click', () => {
+                // Open the sign-in page to create a master password
+                if (globalThis.SyncService) {
+                    SyncService.signIn();
+                } else {
+                    // Fallback: switch to settings tab to sign in
+                    if (globalThis.AppRouter) globalThis.AppRouter.switchTo('settings');
+                }
+            });
+        }
 
         // --- Reset Extension button (on the locked/login screen) ---
         const btnResetExt = document.getElementById('pm-reset-ext-btn');
