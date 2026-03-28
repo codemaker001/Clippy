@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Architecture Snapshot - Personal Dashboard</title>
+    <!-- Modern Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --text-color: #e2e8f0;
+            --accent-color: #38bdf8;
+            --card-bg: #1e293b;
+            --border-color: #334155;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1, h2, h3 {
+            color: #f8fafc;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-top: 50px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: var(--accent-color);
+            text-align: center;
+            border: none;
+            margin-bottom: 50px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .diagram-container {
+            background-color: #ffffff; /* Mermaid renders best on light/transparent, forcing white for contrast */
+            border-radius: 12px;
+            padding: 20px;
+            margin: 30px 0;
+            overflow-x: auto;
+            border: 1px solid #cbd5e1;
+        }
+
+        code {
+            background-color: #020617;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #a78bfa;
+            font-family: inherit;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: #0f172a;
+            color: var(--accent-color);
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Personal Dashboard & Vault: Complete Architectural Snapshot</h1>
+
+        <div class="card">
+            <h2>1. Three-Tier Zero-Knowledge Architecture</h2>
+            <p>The system is physically distributed across three distinct tiers to maximize security (by isolating the encryption layer from the database layer) while ensuring seamless synchronization.</p>
+            
+            <div class="diagram-container">
+                <div class="mermaid">
+                    graph TD
+                    classDef client fill:#f0f9ff,stroke:#0284c7,stroke-width:2px,color:#0f172a;
+                    classDef cloud fill:#fdf4ff,stroke:#c026d3,stroke-width:2px,color:#0f172a;
+                    classDef auth fill:#f0fdf4,stroke:#16a34a,stroke-width:2px,color:#0f172a;
+
+                    subgraph Client["Tier 1: Client (Extension)"]
+                        UI[External UI / Popup<br>Reacts to State] ::: client
+                        Crypto[Client-Side Crypto<br>Web Crypto API] ::: client
+                        Sync[Sync Engine<br>core/sync.js] ::: client
+                        IDB[(IndexedDB<br>Offline Cache)] ::: client
+                        
+                        UI -->|Decrypt / Encrypt| Crypto
+                        UI -->|Save/Read| IDB
+                        Crypto -.->|Syncs Ciphertexts| Sync
+                        IDB <-->|Mirrors Local| Sync
+                    end
+
+                    subgraph Cloud["Tier 2: Supabase Cloud"]
+                        SAuth[Supabase Auth API] ::: cloud
+                        DB[(PostgreSQL + RLS)] ::: cloud
+                        RT((Realtime WebSockets)) ::: cloud
+                        
+                        SAuth -->|Issues Session Token| Sync
+                        Sync <-->|Upserts & OCC| DB
+                        DB -.->|Triggers| RT
+                        RT -.->|Broadcasts Changes| Sync
+                    end
+
+                    subgraph WebAuth["Tier 3: Auth Web App (auth-page)"]
+                        LoginPage[Login / Signup Page<br>Vercel Hosted] ::: auth
+                        LoginPage -->|Authenticates against| SAuth
+                        LoginPage -->|Sends Secure Token<br>via chrome.runtime| UI
+                    end
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>2. Deep-Dive Component Messaging Architecture</h2>
+            <p>Within the Extension (Tier 1), the architecture relies on loosely coupled contexts communicating via secure message channels.</p>
+            
+            <div class="diagram-container">
+                <div class="mermaid">
+                    sequenceDiagram
+                        participant Content as Content Scripts<br>(Injected in Webpages)
+                        participant BG as Background.js<br>(Service Worker)
+                        participant Popup as Extension UI<br>(popup.js / vault.js)
+                        participant DB as IndexedDB
+
+                        Content->>BG: chrome.runtime.sendMessage<br>(action: process_login)
+                        BG-->>Content: Response (prompt_save / prompt_update)
+                        Note over Content, BG: Content script captures forms & credentials
+
+                        Content->>BG: check_pending_save
+                        BG-->>Content: returns pending session data
+
+                        Popup->>BG: action: unlock_vault
+                        BG-->>Popup: Response (Decrypted cache & timeout initialized)
+                        
+                        Popup->>DB: AppDB.addItem()
+                        DB-->>Popup: Transaction Complete
+                        Popup->>SyncService: pushNote()
+                        SyncService-->>BG: Updates Sync Status
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>3. Database Schema Mapping</h2>
+            <p>Every entity maps locally and remotely. Local uses <code>IndexedDB v3</code>. Remote uses <code>Supabase Postgres</code>.</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Domain Model</th>
+                        <th>IndexedDB (Local Offline)</th>
+                        <th>Supabase (Cloud)</th>
+                        <th>Conflict Resolution Method</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Folders</strong></td>
+                        <td><code>folders</code> Store (Key: id)</td>
+                        <td><code>folders</code> Table</td>
+                        <td>OCC (Optimistic Concurrency Control) via <code>version</code> col</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Notes & Links</strong></td>
+                        <td><code>items</code> Store (Key: id)</td>
+                        <td><code>notes</code> Table</td>
+                        <td>OCC via <code>version</code> col + Tombstones for Deletions</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Vault (Passwords)</strong></td>
+                        <td><code>pm_vault_data</code> (Storage API)</td>
+                        <td><code>vault_data</code> (JSONB)</td>
+                        <td>Encrypted logical merge on decryption (Item-level OCC inside Blob)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Crypto Keys</strong></td>
+                        <td><code>pm_vault_keys</code> (Storage API)</td>
+                        <td><code>vault_keys</code> Table</td>
+                        <td>Server-wins if modified remotely (keys shouldn't conflict)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Deletions</strong></td>
+                        <td>No local store (Hard deleted)</td>
+                        <td><code>tombstones</code> Table</td>
+                        <td>UUID permanently recorded; strips from syncing devices.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>4. Data Sync Flow (OCC & Tombstones)</h2>
+            <p>The <code>SyncService</code> runs entirely in the background. It employs <b>Optimistic Concurrency Control (OCC)</b> using monotonically increasing integers (<code>version</code>) to protect against split-brain scenarios and data overwrites.</p>
+
+            <div class="diagram-container">
+                <div class="mermaid">
+                    flowchart TD
+                        Start((Local Change)) --> LocalInc["Increment local version<br/>(v = v + 1)"]
+                        LocalInc --> Push[Push Payload to Supabase]
+                        
+                        Push --> ServerCheck{Server Version vs Payload Version?}
+                        ServerCheck -->|Server < Payload| Accept[Server Accepts Upsert]
+                        ServerCheck -->|Server > Payload| Conflict[Conflict detected!]
+                        
+                        Conflict --> Pull[Pull Remote Record]
+                        Pull --> MergeCheck{Which is newer?}
+                        MergeCheck -->|Remote updated_at > Local| Adopt[Adopt Remote Record entirely]
+                        MergeCheck -->|Local updated_at > Remote| Overwrite[Overwrite Server Record]
+
+                        Adopt --> UpdateLocal[Update IndexedDB]
+                </div>
+            </div>
+            <p><b>Tombstone Architecture:</b> When a user deletes a note locally, it is erased from IndexedDB. Simultaneously, `core/db.js` fires `SyncService.deleteNoteFromCloud()`. Instead of hard-deleting in the cloud, an entry is inserted into the `tombstones` table. When Device B connects, it fetches tombstones first and scrubs its local DB.</p>
+        </div>
+
+        <div class="card">
+            <h2>5. Zero-Knowledge Crypto Flow (Password Vault)</h2>
+            <p>The heart of the password manager security model leveraging the <code>Web Crypto API</code> via <code>password-manager/crypto.js</code>. Supabase only ever sees meaningless ciphertext.</p>
+
+            <div class="diagram-container">
+                <div class="mermaid">
+                    flowchart LR
+                        MP[Master Password<br>User's Brain] -->|PBKDF2-SHA256<br>600,000 Iterations| KEK(Key Encryption Key<br>Ephemeral RAM)
+                        
+                        VaultRaw[Raw JSON Vault] -->|AES-GCM 256| VaultEnc[Encrypted Vault Blob<br>Ciphertext]
+                        DEK(Data Encryption Key<br>AES-GCM) -->|Encrypts| VaultEnc
+                        
+                        KEK -->|Encrypts| DEK
+                        DEK --> EDEK[Encrypted DEK]
+                        
+                        VaultEnc --> DB[(Supabase DB)]
+                        EDEK --> DB
+                </div>
+            </div>
+
+            <h3>Cryptographic Steps in Detail:</h3>
+            <ul>
+                <li><strong>Creation:</strong> When a user creates a Vault, a 256-bit symmetric Data Encryption Key (<b>DEK</b>) is generated. The empty vault JSON is encrypted with this DEK.</li>
+                <li><strong>Derivation:</strong> The user's Master Password is hashed using PBKDF2 (600,000 rounds) + a 16-byte random salt to generate the Key Encryption Key (<b>KEK</b>).</li>
+                <li><strong>Wrapping:</strong> The KEK is used exclusively to encrypt the DEK. The output is the Encrypted DEK (<b>EDEK</b>). The EDEK and Vault Ciphertext are saved to the cloud.</li>
+                <li><strong>Decryption (Device B):</strong> Device B downloads the EDEK. User types Master Password -> KEK is derived -> EDEK is decrypted yielding the DEK -> Vault is decrypted.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Initialize Mermaid -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true, 
+            theme: 'default',
+            securityLevel: 'loose'
+        });
+    </script>
+</body>
+</html>

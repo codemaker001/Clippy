@@ -100,7 +100,7 @@ class VaultService {
             }, () => {
                 if (chrome.runtime.lastError) reject(chrome.runtime.lastError);
                 else {
-                    globalThis.SyncService?.triggerAutoSync();
+                    globalThis.SyncService?.pushVault();
                     resolve();
                 }
             });
@@ -172,7 +172,7 @@ class VaultService {
                     this.vaultCache = savedCache;
 
                     this._storeSession(masterPassword);
-                    globalThis.SyncService?.triggerAutoSync();
+                    globalThis.SyncService?.pushVault();
                     this._dispatchEvent('vaultUnlocked');
                     resolve(true);
                 });
@@ -246,7 +246,7 @@ class VaultService {
                     reject(chrome.runtime.lastError);
                 } else {
                     // Start sync timer
-                    globalThis.SyncService?.triggerAutoSync();
+                    globalThis.SyncService?.pushVault();
                     // Lock the vault immediately after creation, forcing user to re-enter
                     this._lock();
                     resolve(true);
@@ -263,9 +263,10 @@ class VaultService {
      */
     async unlock(masterPassword) {
         return new Promise((resolve, reject) => {
-            chrome.storage.local.get([this.STORAGE_KEY, this.KEYS_KEY], async (result) => {
+            chrome.storage.local.get([this.STORAGE_KEY, this.KEYS_KEY, this.PLAINTEXT_KEY], async (result) => {
                 const vaultPayload = result[this.STORAGE_KEY];
                 const keysPayload = result[this.KEYS_KEY];
+                const plaintextData = result[this.PLAINTEXT_KEY];
 
                 // If no keysPayload but we have vaultPayload v1, it's a legacy vault
                 if (vaultPayload && vaultPayload.v === 1 && !keysPayload) {
@@ -320,7 +321,7 @@ class VaultService {
                         });
                         
                         this._storeSession(masterPassword);
-                        globalThis.SyncService?.triggerAutoSync();
+                        globalThis.SyncService?.pushVault();
                         this._dispatchEvent('vaultUnlocked');
                         return resolve(true);
                     } catch (e) {
@@ -348,9 +349,15 @@ class VaultService {
                     if (vaultPayload && vaultPayload.data) {
                         const plaintext = await this.crypto.decrypt(vaultPayload.data, vaultPayload.iv, dekKey);
                         this.vaultCache = JSON.parse(plaintext);
+                    } else if (plaintextData) {
+                        // Migrate plaintext into encrypted vault automatically
+                        this.vaultCache = plaintextData;
+                        chrome.storage.local.remove([this.PLAINTEXT_KEY]);
+                        setTimeout(() => this._saveToStorage(), 0);
                     } else {
-                        // Empty vault downloaded from cloud but no payload yet? Shouldn't happen.
+                        // Empty vault (e.g. fresh account without synced data yet)
                         this.vaultCache = { entries: [], categories: [], settings: {} };
+                        setTimeout(() => this._saveToStorage(), 0);
                     }
 
                     this.masterKey = dekKey;
@@ -460,13 +467,16 @@ class VaultService {
 
         return new Promise((resolve, reject) => {
             chrome.storage.local.get([this.STORAGE_KEY], async (result) => {
-                const payload = result[this.STORAGE_KEY];
-                if (!payload) return reject(new Error("Vault data missing during save."));
+                let payload = result[this.STORAGE_KEY];
 
                 try {
                     const jsonString = JSON.stringify(this.vaultCache);
                     // Generate new IV for every save operation
                     const { ciphertext, iv } = await this.crypto.encrypt(jsonString, this.masterKey);
+
+                    if (!payload) {
+                        payload = { v: 2, version: 0 };
+                    }
 
                     payload.iv = iv;
                     payload.data = ciphertext;
@@ -476,7 +486,7 @@ class VaultService {
                         [this.STORAGE_KEY]: payload,
                         unpushedVaultChanges: true
                     }, () => {
-                        globalThis.SyncService?.triggerAutoSync();
+                        globalThis.SyncService?.pushVault();
                         if (chrome.runtime.lastError) reject(chrome.runtime.lastError);
                         else resolve();
                     });

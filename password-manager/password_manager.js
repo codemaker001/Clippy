@@ -977,7 +977,8 @@ const PasswordManager = (function () {
     }
 
     return {
-        init
+        init,
+        refreshView: init
     };
 
 })();

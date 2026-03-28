@@ -320,13 +320,17 @@ chrome.runtime.onMessageExternal.addListener(async (message, sender, sendRespons
     return true; // Keep channel open for async
 });
 
-// --- Auto-sync on browser startup ---
+// --- Auto-sync and Realtime subscription on browser startup ---
 chrome.runtime.onStartup.addListener(async () => {
     try {
         if (globalThis.SyncService) {
             const signedIn = await globalThis.SyncService.isSignedIn();
             if (signedIn) {
                 const state = await globalThis.SyncService._getSyncState();
+                // Subscribe to Realtime for instant cross-device sync
+                if (state.googleProfile?.uid) {
+                    globalThis.SyncService._subscribeRealtime(state.googleProfile.uid);
+                }
                 if (state.autoSync !== false) {
                     globalThis.SyncService.syncAll().catch(err => {
                         console.warn('Auto-sync on startup failed:', err);

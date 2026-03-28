@@ -2,12 +2,15 @@
  * core/db.js — IndexedDB shared configuration and initialization.
  * Single source of truth for database constants and setup.
  * Used by both popup context and the background service worker.
+ *
+ * v4: UUID-only primary keys (no more autoIncrement).
+ *     The `id` field IS the UUID — no separate `uuid` index.
  */
 
 const AppDB = (function () {
 
     const DB_NAME = 'PersonalDashboardDB';
-    const DB_VERSION = 3; // v3: added 'uuid' unique index on folders + items
+    const DB_VERSION = 4; // v4: UUID-only primary keys
     const FOLDERS_STORE = 'folders';
     const ITEMS_STORE = 'items';
 
@@ -28,34 +31,44 @@ const AppDB = (function () {
 
             request.onupgradeneeded = (event) => {
                 const dbInstance = event.target.result;
+                const tx = event.target.transaction;
 
                 // --- Folders store ---
                 if (!dbInstance.objectStoreNames.contains(FOLDERS_STORE)) {
-                    const fStore = dbInstance.createObjectStore(FOLDERS_STORE, { keyPath: 'id', autoIncrement: true });
-                    fStore.createIndex('uuid', 'uuid', { unique: true });
+                    const fStore = dbInstance.createObjectStore(FOLDERS_STORE, { keyPath: 'id' });
+                    fStore.createIndex('parentId', 'parentId', { unique: false });
                 } else {
-                    const fStore = event.target.transaction.objectStore(FOLDERS_STORE);
-                    if (!fStore.indexNames.contains('uuid')) {
-                        fStore.createIndex('uuid', 'uuid', { unique: false }); // non-unique during migration (existing rows have no uuid)
+                    const fStore = tx.objectStore(FOLDERS_STORE);
+                    // Migration: convert old autoIncrement records to UUID-keyed records
+                    if (event.oldVersion < 4) {
+                        _migrateStoreToUUID(fStore);
+                    }
+                    // Clean up legacy indexes
+                    if (fStore.indexNames.contains('uuid')) fStore.deleteIndex('uuid');
+                    if (!fStore.indexNames.contains('parentId')) {
+                        fStore.createIndex('parentId', 'parentId', { unique: false });
                     }
                 }
 
                 // --- Items store ---
-                let itemsStore;
                 if (!dbInstance.objectStoreNames.contains(ITEMS_STORE)) {
-                    itemsStore = dbInstance.createObjectStore(ITEMS_STORE, { keyPath: 'id', autoIncrement: true });
+                    const iStore = dbInstance.createObjectStore(ITEMS_STORE, { keyPath: 'id' });
+                    iStore.createIndex('folderId', 'folderId', { unique: false });
+                    iStore.createIndex('tags', 'tags', { unique: false, multiEntry: true });
                 } else {
-                    itemsStore = event.target.transaction.objectStore(ITEMS_STORE);
-                }
-
-                if (!itemsStore.indexNames.contains('folderId')) {
-                    itemsStore.createIndex('folderId', 'folderId', { unique: false });
-                }
-                if (!itemsStore.indexNames.contains('tags')) {
-                    itemsStore.createIndex('tags', 'tags', { unique: false, multiEntry: true });
-                }
-                if (!itemsStore.indexNames.contains('uuid')) {
-                    itemsStore.createIndex('uuid', 'uuid', { unique: false }); // non-unique during migration
+                    const iStore = tx.objectStore(ITEMS_STORE);
+                    // Migration: convert old autoIncrement records to UUID-keyed records
+                    if (event.oldVersion < 4) {
+                        _migrateStoreToUUID(iStore);
+                    }
+                    // Clean up legacy indexes
+                    if (iStore.indexNames.contains('uuid')) iStore.deleteIndex('uuid');
+                    if (!iStore.indexNames.contains('folderId')) {
+                        iStore.createIndex('folderId', 'folderId', { unique: false });
+                    }
+                    if (!iStore.indexNames.contains('tags')) {
+                        iStore.createIndex('tags', 'tags', { unique: false, multiEntry: true });
+                    }
                 }
             };
 
@@ -67,13 +80,42 @@ const AppDB = (function () {
     }
 
     /**
+     * Migrate legacy autoIncrement records to UUID-keyed records.
+     * For each record: if `uuid` exists, replace `id` with `uuid`;
+     * otherwise generate a new UUID as `id`.
+     */
+    function _migrateStoreToUUID(store) {
+        const getAllReq = store.getAll();
+        getAllReq.onsuccess = () => {
+            const records = getAllReq.result || [];
+            for (const record of records) {
+                // Delete the old numeric-keyed record
+                store.delete(record.id);
+                // Assign UUID as the new id
+                const newId = record.uuid || crypto.randomUUID();
+                const { uuid: _dropped, ...rest } = record;
+                rest.id = newId;
+                // Fix folder references: if parentId was numeric, clear it
+                // (will be re-linked on next sync)
+                if (rest.parentId && typeof rest.parentId === 'number') {
+                    rest.parentId = null;
+                }
+                if (rest.folderId && typeof rest.folderId === 'number') {
+                    rest.folderId = null;
+                }
+                store.add(rest);
+            }
+        };
+    }
+
+    /**
      * Get the current db instance (may be null if not yet initialized).
      */
     function getDB() {
         return db;
     }
 
-    // --- CRUD Helpers (for Notes module, which uses IndexedDB directly) ---
+    // --- CRUD Helpers ---
 
     function getItem(id) {
         return new Promise((resolve, reject) => {
@@ -90,42 +132,46 @@ const AppDB = (function () {
     }
 
     function addItem(item, onComplete) {
-        // Inject stable cross-device UUID if missing
-        if (!item.uuid) item.uuid = crypto.randomUUID();
-        // Stamp createdAt and updatedAt for timestamp-based merge
+        // Use UUID as the primary key
+        if (!item.id) item.id = crypto.randomUUID();
         if (!item.createdAt) item.createdAt = new Date().toISOString();
         item.updatedAt = new Date().toISOString();
-        item.version = 1; // Logical clock initialization
+        item.version = 1;
 
         const transaction = db.transaction([ITEMS_STORE], 'readwrite');
-        transaction.objectStore(ITEMS_STORE).add(item);
+        const store = transaction.objectStore(ITEMS_STORE);
+        store.add(item);
         transaction.oncomplete = () => {
             chrome.storage.local.set({ unpushedLocalChanges: true });
             if (onComplete) onComplete();
-            globalThis.SyncService?.triggerAutoSync();
+            globalThis.SyncService?.pushNote(item);
         };
         return transaction;
     }
 
     function updateItem(id, dataToUpdate, onComplete) {
+        let updatedItem = null;
         const transaction = db.transaction([ITEMS_STORE], 'readwrite');
         const store = transaction.objectStore(ITEMS_STORE);
         const request = store.get(id);
         request.onsuccess = () => {
             const item = request.result;
             if (item) {
-                store.put({
+                updatedItem = {
                     ...item,
                     ...dataToUpdate,
                     updatedAt: new Date().toISOString(),
-                    version: (item.version || 1) + 1 // Increment logical clock
-                });
+                    version: (item.version || 1) + 1
+                };
+                store.put(updatedItem);
             }
         };
         transaction.oncomplete = () => {
             chrome.storage.local.set({ unpushedLocalChanges: true });
             if (onComplete) onComplete();
-            globalThis.SyncService?.triggerAutoSync();
+            if (updatedItem) {
+                globalThis.SyncService?.pushNote(updatedItem);
+            }
         };
         return transaction;
     }
@@ -133,9 +179,9 @@ const AppDB = (function () {
     function deleteItem(id, onComplete) {
         // Record tombstone before deleting so the deletion propagates on sync
         getItem(id).then(item => {
-            if (item?.uuid) {
-                const deletedVersion = (item.version || 1) + 1; // Tombstone strictly beats item
-                globalThis.SyncService?._recordTombstone(item.uuid, deletedVersion);
+            if (item) {
+                const deletedVersion = (item.version || 1) + 1;
+                globalThis.SyncService?.deleteNoteFromCloud(item.id, deletedVersion);
             }
         });
         const transaction = db.transaction([ITEMS_STORE], 'readwrite');
@@ -143,7 +189,6 @@ const AppDB = (function () {
         transaction.oncomplete = () => {
             chrome.storage.local.set({ unpushedLocalChanges: true });
             if (onComplete) onComplete();
-            globalThis.SyncService?.triggerAutoSync();
         };
         return transaction;
     }
@@ -154,41 +199,43 @@ const AppDB = (function () {
         const maxOrder = sameLevelFolders.reduce((max, f) => Math.max(max, f.order || 0), -1);
 
         const folderData = {
+            id: crypto.randomUUID(),
             name,
             pin: null,
             parentId,
             order: maxOrder + 1,
-            uuid: crypto.randomUUID(),          // stable cross-device UUID
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            version: 1 // Logical clock initialization
+            version: 1
         };
 
         const transaction = db.transaction([FOLDERS_STORE], 'readwrite');
-        transaction.objectStore(FOLDERS_STORE).add(folderData);
+        const store = transaction.objectStore(FOLDERS_STORE);
+        store.add(folderData);
         transaction.oncomplete = () => {
             chrome.storage.local.set({ unpushedLocalChanges: true });
             if (onComplete) onComplete();
-            globalThis.SyncService?.triggerAutoSync();
+            globalThis.SyncService?.pushFolder(folderData);
         };
         return transaction;
     }
 
     function updateFolderOrders(orderMap) {
         return new Promise((resolve, reject) => {
+            const changedFolders = [];
             const transaction = db.transaction([FOLDERS_STORE], 'readwrite');
             const store = transaction.objectStore(FOLDERS_STORE);
             
             Object.keys(orderMap).forEach(id => {
-                const folderId = parseInt(id);
                 const order = orderMap[id];
-                const request = store.get(folderId);
+                const request = store.get(id);
                 request.onsuccess = () => {
                     const folder = request.result;
                     if (folder) {
                         folder.order = order;
-                        folder.version = (folder.version || 1) + 1; // Increment logical clock on order change
+                        folder.version = (folder.version || 1) + 1;
                         store.put(folder);
+                        changedFolders.push({ ...folder });
                     }
                 };
             });
@@ -196,28 +243,34 @@ const AppDB = (function () {
             transaction.oncomplete = () => {
                 chrome.storage.local.set({ unpushedLocalChanges: true });
                 resolve();
-                globalThis.SyncService?.triggerAutoSync();
+                if (changedFolders.length > 0) {
+                    globalThis.SyncService?.pushFolders(changedFolders);
+                }
             };
             transaction.onerror = () => reject(transaction.error);
         });
     }
 
     function updateFolder(id, dataToUpdate, onComplete) {
+        let updatedFolder = null;
         const transaction = db.transaction([FOLDERS_STORE], 'readwrite');
         const store = transaction.objectStore(FOLDERS_STORE);
         const request = store.get(id);
         request.onsuccess = () => {
-            store.put({
+            updatedFolder = {
                 ...request.result,
                 ...dataToUpdate,
                 updatedAt: new Date().toISOString(),
-                version: (request.result.version || 1) + 1 // Increment logical clock
-            });
+                version: (request.result.version || 1) + 1
+            };
+            store.put(updatedFolder);
         };
         transaction.oncomplete = () => {
             chrome.storage.local.set({ unpushedLocalChanges: true });
             if (onComplete) onComplete();
-            globalThis.SyncService?.triggerAutoSync();
+            if (updatedFolder) {
+                globalThis.SyncService?.pushFolder(updatedFolder);
+            }
         };
         return transaction;
     }
@@ -242,19 +295,16 @@ const AppDB = (function () {
             itemRequest.onsuccess = () => {
                 itemRequest.result.forEach(item => {
                     if (foldersToDelete.has(item.folderId)) {
-                        // Record tombstone so deletion propagates on sync
-                        if (item.uuid) {
-                            const deletedVersion = (item.version || 1) + 1;
-                            globalThis.SyncService?._recordTombstone(item.uuid, deletedVersion);
-                        }
+                        const deletedVersion = (item.version || 1) + 1;
+                        globalThis.SyncService?.deleteNoteFromCloud(item.id, deletedVersion);
                         itemStore.delete(item.id);
                     }
                 });
-                // Tombstone the folders themselves too
+                // Delete folders and push tombstones
                 allFolders.forEach(f => {
-                    if (foldersToDelete.has(f.id) && f.uuid) {
+                    if (foldersToDelete.has(f.id)) {
                         const deletedVersion = (f.version || 1) + 1;
-                        globalThis.SyncService?._recordTombstone(f.uuid, deletedVersion);
+                        globalThis.SyncService?.deleteFolderFromCloud(f.id, deletedVersion);
                     }
                 });
             };
@@ -266,7 +316,6 @@ const AppDB = (function () {
                 folderTransaction.oncomplete = () => {
                     chrome.storage.local.set({ unpushedLocalChanges: true });
                     if (onComplete) onComplete();
-                    globalThis.SyncService?.triggerAutoSync();
                 };
             };
         });
@@ -277,8 +326,8 @@ const AppDB = (function () {
             const request = db.transaction(FOLDERS_STORE).objectStore(FOLDERS_STORE).getAll();
             request.onsuccess = e => {
                 const folders = e.target.result || [];
-                // Sort by order, then by ID as fallback
-                folders.sort((a, b) => (a.order || 0) - (b.order || 0) || (a.id - b.id));
+                // Sort by order, then by creation time as fallback
+                folders.sort((a, b) => (a.order || 0) - (b.order || 0));
                 resolve(folders);
             };
         });

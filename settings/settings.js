@@ -72,7 +72,7 @@ const SettingsApp = (function() {
                 settings: currentSettings 
             });
             // Trigger auto-sync so settings propagate immediately
-            globalThis.SyncService?.triggerAutoSync();
+            globalThis.SyncService?.pushSettings();
         });
     }
 

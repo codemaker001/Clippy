@@ -254,14 +254,13 @@
             return;
         }
 
-        const headers = ['Name', 'Email', 'Premium', 'Registered', 'Last Synced', 'Extension Version'];
+        const headers = ['Name', 'Email', 'Premium', 'Registered', 'Last Synced'];
         const rows = allUsers.map(u => [
             u.name || '',
             u.email || '',
             u.isPremium ? 'Yes' : 'No',
             u.registeredAt || '',
-            u.lastSyncedAt || '',
-            u.extensionVersion || ''
+            u.lastSyncedAt || ''
         ]);
 
         let csv = headers.join(',') + '\n';

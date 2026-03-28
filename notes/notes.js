@@ -744,23 +744,25 @@ const NotesApp = (function () {
                     const now = new Date();
                     const folderName = `Saved Tabs - ${now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, ${now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}`;
 
-                    // Create folder with UUID, timestamps and retrieve its new auto-incremented id
+                    // Create folder with UUID as the primary key
                     let savedCount = 0;
-                    const newFolderId = await new Promise((resolve, reject) => {
+                    const newFolderId = crypto.randomUUID();
+                    await new Promise((resolve, reject) => {
                         const tx = db.transaction(['folders'], 'readwrite');
                         const fStore = tx.objectStore('folders');
                         const nowIso = new Date().toISOString();
-                        const req = fStore.add({
+                        fStore.add({
+                            id: newFolderId,
                             name: folderName,
                             pin: null,
                             parentId: null,
                             order: 0,
-                            uuid: crypto.randomUUID(),
                             createdAt: nowIso,
-                            updatedAt: nowIso
+                            updatedAt: nowIso,
+                            version: 1
                         });
-                        req.onsuccess = () => resolve(req.result);
-                        req.onerror = () => reject(req.error);
+                        tx.oncomplete = () => resolve();
+                        tx.onerror = () => reject(tx.error);
                     });
 
                     const validTabs = tabs.filter(tab => tab.url && !tab.url.startsWith('chrome://') && !tab.url.startsWith('edge://'));
@@ -778,7 +780,6 @@ const NotesApp = (function () {
                         savedCount++;
                     }
 
-                    globalThis.SyncService?.triggerAutoSync();
                     renderFolders().then(() => setActiveFolder(newFolderId));
                     alert(`${savedCount} tabs have been successfully saved to "${folderName}".`);
                 });
@@ -791,7 +792,7 @@ const NotesApp = (function () {
         el.folderList.addEventListener('dragstart', (e) => {
             const item = e.target.closest('.folder-item');
             if (item && item.dataset.id !== 'all') {
-                draggedFolderId = parseInt(item.dataset.id);
+                draggedFolderId = item.dataset.id;
                 item.classList.add('dragging');
                 e.dataTransfer.effectAllowed = 'move';
                 e.dataTransfer.setData('text/plain', draggedFolderId);
@@ -810,7 +811,7 @@ const NotesApp = (function () {
         el.folderList.addEventListener('dragover', (e) => {
             e.preventDefault();
             const target = e.target.closest('.folder-item');
-            if (!target || target.dataset.id === 'all' || parseInt(target.dataset.id) === draggedFolderId) return;
+            if (!target || target.dataset.id === 'all' || target.dataset.id === draggedFolderId) return;
 
             const rect = target.getBoundingClientRect();
             const midpoint = rect.top + rect.height / 2;
@@ -831,10 +832,10 @@ const NotesApp = (function () {
             const target = e.target.closest('.folder-item');
             if (!target || target.dataset.id === 'all') return;
 
-            const droppedId = parseInt(e.dataTransfer.getData('text/plain'));
-            if (!droppedId || droppedId === parseInt(target.dataset.id)) return;
+            const droppedId = e.dataTransfer.getData('text/plain');
+            if (!droppedId || droppedId === target.dataset.id) return;
 
-            const targetId = parseInt(target.dataset.id);
+            const targetId = target.dataset.id;
             const rect = target.getBoundingClientRect();
             const midpoint = rect.top + rect.height / 2;
             const insertAfter = e.clientY >= midpoint;
@@ -873,7 +874,7 @@ const NotesApp = (function () {
             const folderIdStr = folderItem.dataset.id;
             if (folderIdStr === 'all') { setActiveFolder('all'); return; }
 
-            const folderId = parseInt(folderIdStr);
+            const folderId = folderIdStr;
             const folder = await getFolder(folderId);
 
             if (e.target.closest('.edit-folder')) {
@@ -921,7 +922,7 @@ const NotesApp = (function () {
             const card = e.target.closest('.folder-card');
             if (!card || card.classList.contains('create-folder-card')) return;
 
-            const folderId = parseInt(card.dataset.id);
+            const folderId = card.dataset.id;
             const folder = await getFolder(folderId);
 
             if (e.target.closest('.edit-folder-card')) {
@@ -1003,7 +1004,7 @@ const NotesApp = (function () {
         el.gridScrollContainer.addEventListener('click', async e => {
             const card = e.target.closest('.item-card');
             if (!card) return;
-            const itemId = parseInt(card.dataset.id);
+            const itemId = card.dataset.id;
 
             if (e.target.closest('.delete-item-btn')) {
                 const confirmed = await AppUtils.showConfirmDialog({ title: 'Delete Item?', body: 'Are you sure you want to delete this item? This cannot be undone.', confirmLabel: 'Delete' });
@@ -1121,7 +1122,7 @@ const NotesApp = (function () {
 
         // Save edit
         el.saveEditBtn.addEventListener('click', () => {
-            const itemId = parseInt(el.viewItemModal.dataset.itemId);
+            const itemId = el.viewItemModal.dataset.itemId;
             const itemType = el.viewItemModal.dataset.itemType;
             let newContent = '';
             if (itemType === 'text') newContent = editQuill.root.innerHTML;
@@ -1139,7 +1140,7 @@ const NotesApp = (function () {
 
         // Delete from view
         el.deleteViewModalBtn.addEventListener('click', async () => {
-            const itemId = parseInt(el.viewItemModal.dataset.itemId);
+            const itemId = el.viewItemModal.dataset.itemId;
             if (!itemId) return;
             const confirmed = await AppUtils.showConfirmDialog({ title: 'Delete Item?', body: 'Are you sure you want to delete this item? This cannot be undone.', confirmLabel: 'Delete' });
             if (confirmed) { deleteItem(itemId); closeModal(); }
@@ -1267,7 +1268,7 @@ const NotesApp = (function () {
 
         // Move modal
         el.moveItemBtn.addEventListener('click', async () => {
-            const itemId = parseInt(el.viewItemModal.dataset.itemId);
+            const itemId = el.viewItemModal.dataset.itemId;
             const currentItemFolderId = el.viewItemModal.dataset.currentItemFolderId;
             const allFolders = await new Promise(resolve =>
                 db.transaction('folders').objectStore('folders').getAll().onsuccess = e => resolve(e.target.result)
@@ -1283,9 +1284,9 @@ const NotesApp = (function () {
 
         el.cancelMoveItemBtn.addEventListener('click', closeModal);
         el.confirmMoveItemBtn.addEventListener('click', () => {
-            const itemId = parseInt(el.moveItemModal.dataset.itemId);
-            const newFolderId = el.moveFolderSelect.value === 'null' ? null : parseInt(el.moveFolderSelect.value);
-            if (itemId !== undefined) { updateItem(itemId, { folderId: newFolderId }); closeModal(); }
+            const itemId = el.moveItemModal.dataset.itemId;
+            const newFolderId = el.moveFolderSelect.value === 'null' ? null : el.moveFolderSelect.value;
+            if (itemId) { updateItem(itemId, { folderId: newFolderId }); closeModal(); }
         });
 
         // PIN modals
@@ -1661,9 +1662,24 @@ const NotesApp = (function () {
         openViewModal(noteId);
     }
 
+    /**
+     * Refresh the current view (re-render folders and items from IDB).
+     * Called by the router when inbound Realtime changes arrive.
+     */
+    async function refreshView() {
+        if (!initialized) return;
+        await refreshExistingTags();
+        await renderFolders();
+        // Re-render current active folder items
+        if (typeof activeFolder !== 'undefined' && activeFolder !== null) {
+            setActiveFolder(activeFolder);
+        }
+    }
+
     return {
         init,
-        openNote
+        openNote,
+        refreshView
     };
 
 })();

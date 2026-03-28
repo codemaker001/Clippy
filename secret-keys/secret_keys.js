@@ -760,7 +760,8 @@ const SecretKeys = (function () {
     }
 
     return {
-        init
+        init,
+        refreshView: init
     };
 
 })();

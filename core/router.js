@@ -65,8 +65,8 @@ const AppRouter = (function () {
             // Initialize the module
             config.initFn();
 
-            // Trigger sync down to the cloud
-            globalThis.SyncService?.triggerAutoSync();
+            // Sync fresh data from cloud on tab switch
+            globalThis.SyncService?.syncAll().catch(e => console.warn('[Router] syncAll failed:', e));
 
         } catch (err) {
             console.error(`Router: Failed to load tab "${appName}"`, err);
@@ -161,3 +161,31 @@ window.AppRouter = AppRouter;
 
 // Bootstrap the SPA when DOM is ready
 document.addEventListener('DOMContentLoaded', () => AppRouter.init());
+
+// Listen for inbound Realtime changes from background.js and re-render the active tab
+chrome.runtime.onMessage.addListener((message) => {
+    if (!message?.action) return;
+
+    const tab = AppRouter.getCurrentTab();
+
+    if (message.action === 'notes_changed' || message.action === 'sync_completed') {
+        if (tab === 'notes' && window.NotesApp && typeof window.NotesApp.refreshView === 'function') {
+            window.NotesApp.refreshView();
+        }
+    }
+
+    if (message.action === 'vault_changed' || message.action === 'sync_completed') {
+        if (tab === 'passwords' && window.PasswordManager && typeof window.PasswordManager.refreshView === 'function') {
+            window.PasswordManager.refreshView();
+        }
+        if (tab === 'secret-keys' && window.SecretKeys && typeof window.SecretKeys.refreshView === 'function') {
+            window.SecretKeys.refreshView();
+        }
+    }
+
+    if (message.action === 'settings_changed') {
+        if (tab === 'settings' && globalThis.SettingsApp && typeof globalThis.SettingsApp.loadSettings === 'function') {
+            globalThis.SettingsApp.loadSettings();
+        }
+    }
+});
